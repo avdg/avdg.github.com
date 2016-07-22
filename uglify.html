@@ -151,7 +151,7 @@ var request = function(url, done, options) {
 var getRef = function(ref, done) {
     var result;
     ref = (ref + "").trim();
-    if ((result = /^(?:PR\s(?:-\s?)?|#)([0-9]+)$/i.exec(ref)) !== null) {
+    if ((result = /^(?:PR\s?(?:-\s?)?|#)([0-9]+)$/i.exec(ref)) !== null) {
         request("https://api.github.com/repos/mishoo/UglifyJS2/pulls/" + result[1], function(res) {
             var data = JSON.parse(res);
             done((data.head || {}).sha);
