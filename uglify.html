@@ -156,8 +156,6 @@ var getRef = function(ref, done) {
             var data = JSON.parse(res);
             done((data.head || {}).sha);
         });
-    } else if (/^[0-9a-fA-F]{3, 40}$/.test(ref)) {
-        done(ref);
     } else {
         done(ref);
     }
@@ -220,7 +218,7 @@ var getUglify = function(ref, done) {
     });
 }
 
-var updateUglify = function(done) {
+var updateUglify = function(done, check) {
     var ref = parseUrl().ref;
     done = typeof done === "function" ? done : function() {};
     if ((UglifyJS || {}).version === ref && typeof ref === "string") {
@@ -230,6 +228,9 @@ var updateUglify = function(done) {
         UglifyJS = cache["uglify-" + ref];
         done(ref);
         return;
+    }
+    if (check && /^[0-9a-fA-F]{3,40}$/.test(ref) && !confirm("Do you want to load external code from " + ref + "? This might be unsafe!")) {
+        return done();
     }
     getUglify(ref || "master", function(uglify, ref, code) {
         cache["uglify-" + ref] = uglify;
@@ -306,7 +307,7 @@ var updateState = function(ref) {
         $("#external-url")[0].value = state.from;
     }
 
-    updateUglify(updateState);
+    updateUglify(updateState, true);
     window.onhashchange = function() {
         updateUglify(updateState);
     }
