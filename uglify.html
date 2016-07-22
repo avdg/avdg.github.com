@@ -177,9 +177,9 @@ var getUglify = function(ref, done) {
             done();
             return;
         }
-        checkedRef = escape(checkedRef);
+        var urlRef = escape(checkedRef);
 
-        request(baseUrl + checkedRef + "/tools/node.js", function(res) {
+        request(baseUrl + urlRef + "/tools/node.js", function(res) {
             if (typeof res !== "string" || res.status >= 400) {
                 console.log(res);
                 done();
@@ -199,9 +199,9 @@ var getUglify = function(ref, done) {
 
             for (var i = 0; i < files.length; i++) {
                 if (files[i].substr(0, 3) === "../") {
-                    files[i] = baseUrl + checkedRef + "/" + files[i].substr(3);
+                    files[i] = baseUrl + urlRef + "/" + files[i].substr(3);
                 } else if (files[i].substr(0, 2) === "./") {
-                    files[i] = baseUrl + checkedRef + "/tools/" + files[i].substr(2);
+                    files[i] = baseUrl + urlRef + "/tools/" + files[i].substr(2);
                 } else {
                     throw Error("Invalid file");
                 }
