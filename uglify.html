@@ -177,6 +177,7 @@ var getUglify = function(ref, done) {
             done();
             return;
         }
+        checkedRef = escape(checkedRef);
 
         request(baseUrl + checkedRef + "/tools/node.js", function(res) {
             if (typeof res !== "string" || res.status >= 400) {
