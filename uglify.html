@@ -30,18 +30,20 @@
         <pre class="col-md-10 col-sm-offset-1" id="editor"></pre>
     </div>
     <div class="row">
-        <form>
-            <button class="btn btn-warning" type="button" id="uglify-compile">Compile</button>
-            <button class="btn btn-info" type="button" id="uglify-url">Store state in url</button>
-            <br>
-            <div class="input-group">
-                <span class="input-group-addon">Load from url</span>
-                <input type="text" class="form-control" id="external-url">
-                <span class="input-group-btn">
-                    <button class="btn btn-default" type="button" id="load-from-external-url">Fetch code</button>
-                </span>
-            </div>
-        </form>
+        <div class="col-md-10 col-sm-offset-1">
+            <form>
+                <button class="btn btn-warning" type="button" id="uglify-compile">Compile</button>
+                <button class="btn btn-info" type="button" id="uglify-url">Store state in url</button>
+                <br>
+                <div class="input-group">
+                    <span class="input-group-addon">Load from url</span>
+                    <input type="text" class="form-control" id="external-url">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="button" id="load-from-external-url">Fetch code</button>
+                    </span>
+                </div>
+            </form>
+        </div>
     </div>
     <div class="row">
         <pre class="col-md-10 col-sm-offset-1" id="output"></pre>
