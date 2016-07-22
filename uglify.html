@@ -59,7 +59,7 @@ var output;
 var parseUrl = function() {
     if (!location.hash) return {};
 
-    var hash = location.hash.substr(1).split("&");
+    var hash = location.hash.substr(1).split(/~|&/);
     var result = {};
 
     for (var i = 0; i < hash.length; i++) {
@@ -116,11 +116,11 @@ var updateUrl = function(state) {
     }
     var hash = [];
     for (var i in state) {
-        if (!/^[a-zA-Z_]+$/.test(i)) continue;
+        if (!/^[a-zA-Z_\-]+$/.test(i)) continue;
         if (typeof state[i] !== "string") continue;
         hash.push(i + "=" + convert(state[i]));
     }
-    return "#" + hash.join("&");
+    return "#" + hash.join("~");
 }
 var request = function(url, done, options) {
     var oReq = new XMLHttpRequest();
