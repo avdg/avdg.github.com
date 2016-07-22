@@ -271,10 +271,11 @@ var updateState = function(ref) {
         if (state.editor === "") {
             state.editor = undefined;
         }
-        if (state.editor.length > 2000) {
+        var hash = updateUrl(state);
+        if (hash.length > 8000) {
             return alert("Too much content");
         }
-        location.hash = updateUrl(state);
+        location.hash = hash;
     });
     $("#uglify-compile").click(function() {
         var state = parseUrl();
