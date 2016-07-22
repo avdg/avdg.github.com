@@ -59,7 +59,7 @@ var output;
 var parseUrl = function() {
     if (!location.hash) return {};
 
-    var hash = location.hash.substr(1).split(/-/);
+    var hash = location.hash.substr(1).split("-");
     var result = {};
 
     for (var i = 0; i < hash.length; i++) {
@@ -71,6 +71,7 @@ var parseUrl = function() {
             .replace(/_u([0-9a-fA-F]{4})/g, function(_, ch) { return String.fromCharCode(parseInt(ch, 16))})
             .replace(/_u\{([0-9a-fA-F]+)\}/g, function(_, ch) { if (parseInt(ch, 16) > 0xffff) { return "";} return String.fromCharCode(parseInt(ch, 16))})
             .replace(/_x([0-9a-fA-F]{2})/g, function(_, ch) { return String.fromCharCode(parseInt(ch, 16))})
+            .replace(/_s([0-9a-fA-F])/g, function(_, ch) { o = " "; for (var i = parseInt(ch, 16);i > 0;i--) {o += " "} return o;})
             .replace(/_(.)/g, function(_, ch) {
                 switch(ch) {
                     case "n": return "\n";
@@ -103,6 +104,13 @@ var updateUrl = function(state) {
                 case "\b": output += "_b"; continue;
                 case "\v": output += "_v"; continue;
                 case "\f": output += "_f"; continue;
+                case " ":
+                    var c = 0;
+                    while (c < 15 && i < input.length && input[i + 1] === " ") {
+                        c++; i++;
+                    }
+                    output += "_s" + c.toString(16);
+                    continue;
             }
             if (/^[a-zA-Z0-9]$/.test(input[i])) {
                 output += input[i];
