@@ -302,6 +302,7 @@ var updateState = function(ref) {
                 ast = sq.compress(ast);
             }
 
+            output.getSession().setMode("ace/mode/javascript");
             output.setValue(ast.print_to_string());
         } catch (e) {
             var msg = e.message;
@@ -311,6 +312,8 @@ var updateState = function(ref) {
                 if (e.line) msg += "line " + e.line + " ";
                 if (e.col) msg += "col " + e.col;
             }
+
+            output.getSession().setMode("ace/mode/text");
             output.setValue(msg);
         }
     });
@@ -338,9 +341,13 @@ var updateState = function(ref) {
 
     output = ace.edit("output");
     output.setTheme("ace/theme/chrome");
-    output.getSession().setMode("ace/mode/javascript");
+    output.getSession().setMode("ace/mode/markdown");
     output.setReadOnly(true);
-    output.setValue("Minified code goes here");
+    output.setValue("Minified code goes here after pressing the compile button\n\n" +
+                    "Shortcuts can be found on https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts\n" +
+                    "A nicer looking one can be found on https://duckduckgo.com/?q=ace+editor+cheat+sheet&iax=1");
+    output.setReadOnly = function(){};
+    output.gotoLine(0,0,false);
 
     editor.focus();
 })();
