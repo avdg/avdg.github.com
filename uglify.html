@@ -239,7 +239,7 @@ var updateUglify = function(done, check) {
         done(ref);
         return;
     }
-    if (check && /^[0-9a-fA-F]{3,40}$|[\0-\x20\*\.:\?\~\[\{\}\x7f-\uffff]/.test(ref) && !confirm("Do you want to load external code from " + ref + "? This might be unsafe!")) {
+    if (check && /^[0-9a-fA-F]{3,40}$|[\0-\x20\*\.:\?\~\[\\\{\}\x7f-\uffff]/.test(ref) && !confirm("Do you want to load external code from " + ref + "? This might be unsafe!")) {
         return done();
     }
     getUglify(ref || "master", function(uglify, ref, code) {
