@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<head lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uglify compressor</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+<style>
+#editor, #output {
+    height: 400px;
+}
+</style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-10 col-sm-offset-1">
+            <form>
+                <div class="input-group">
+                    <span class="input-group-addon" id="uglify-checkout-status">Loading...</span>
+                    <input type="text" class="form-control" id="uglify-checkout-version">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="button" id="uglify-version-change">Change version</button>
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <pre class="col-md-10 col-sm-offset-1" id="editor"></pre>
+    </div>
+    <div class="row">
+        <form>
+            <button class="btn btn-warning" type="button" id="uglify-compile">Compile</button>
+            <button class="btn btn-info" type="button" id="uglify-url">Store state in url</button>
+            <br>
+            <div class="input-group">
+                <span class="input-group-addon">Load from url</span>
+                <input type="text" class="form-control" id="external-url">
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" id="load-from-external-url">Fetch code</button>
+                </span>
+            </div>
+        </form>
+    </div>
+    <div class="row">
+        <pre class="col-md-10 col-sm-offset-1" id="output"></pre>
+    </div>
+</div>
+<script>
+var baseUrl = "https://raw.githubusercontent.com/mishoo/UglifyJS2/";
+var cache = {};
+var UglifyJS;
+var editor;
+var output;
+var parseUrl = function() {
+    if (!location.hash) return {};
+
+    var hash = location.hash.substr(1).split("&");
+    var result = {};
+
+    for (var i = 0; i < hash.length; i++) {
+        var pos = hash[i].indexOf("=");
+        var key = hash[i].substr(0, pos);
+        if (!/^[a-zA-Z]+$/.test(key)) continue;
+        result[key] = hash[i]
+            .substr(pos + 1)
+            .replace(/\\u([0-9a-fA-F]{4})/g, function(_, ch) { return String.fromCharCode(parseInt(ch, 16))})
+            .replace(/\\u\{([0-9a-fA-F]+)\}/g, function(_, ch) { if (parseInt(ch, 16) > 0xffff) { return "";} return String.fromCharCode(parseInt(ch, 16))})
+            .replace(/\\x([0-9a-fA-F]{2})/g, function(_, ch) { return String.fromCharCode(parseInt(ch, 16))})
+            .replace(/\\(.)/g, function(_, ch) {
+                switch(ch) {
+                    case "n": return "\n";
+                    case "r": return "\r";
+                    case "t": return "\t";
+                    case "b": return "\b";
+                    case "v": return "\u000b";
+                    case "f": return "\f";
+                    default: return ch;
+                }
+            });
+    }
+
+    return result;
+}
+var updateUrl = function(state) {
+    var convert = function(input) {
+        var output = "";
+        var padding = function(input, length) {
+            while (input.length < length) {
+                input = "0" + input;
+            }
+            return input;
+        }
+        for (var i = 0; i < input.length; i++) {
+            switch(input[i]) {
+                case "\n": output += "\\n"; continue;
+                case "\r": output += "\\r"; continue;
+                case "\t": output += "\\t"; continue;
+                case "\b": output += "\\b"; continue;
+                case "\v": output += "\\v"; continue;
+                case "\f": output += "\\f"; continue;
+            }
+            if (/^[a-zA-Z0-9]$/.test(input[i])) {
+                output += input[i];
+            } else if (input.charCodeAt(i) <= 0xff) {
+                output += "\\x" + padding(input.charCodeAt(i).toString(16), 2);
+            } else {
+                output += "\\u" + padding(input.charCodeAt(i).toString(16), 2);
+            }
+        }
+        return output;
+    }
+    var hash = [];
+    for (var i in state) {
+        if (!/^[a-zA-Z_]+$/.test(i)) continue;
+        if (typeof state[i] !== "string") continue;
+        hash.push(i + "=" + convert(state[i]));
+    }
+    return "#" + hash.join("&");
+}
+var request = function(url, done, options) {
+    var oReq = new XMLHttpRequest();
+    function reqListener () {
+        if (oReq.readyState !== XMLHttpRequest.DONE) {
+            return;
+        }
+        done(this.responseText, this);
+    }
+    function reqError() {
+        done("", this);
+    }
+
+    options = options || {};
+
+    if (typeof options.headers === "object") {
+        for (var i in options.headers) {
+            oReq.setRequestHeader(i, options.headers[i]);
+        }
+    }
+
+    oReq.addEventListener("load", reqListener);
+    oReq.addEventListener("error", reqError);
+    oReq.open("GET", url);
+    oReq.send();
+}
+
+var getRef = function(ref, done) {
+    var result;
+    ref = (ref + "").trim();
+    if ((result = /^(?:PR\s(?:-\s?)?|#)([0-9]+)$/i.exec(ref)) !== null) {
+        request("https://api.github.com/repos/mishoo/UglifyJS2/pulls/" + result[1], function(res) {
+            var data = JSON.parse(res);
+            done((data.head || {}).sha);
+        });
+    } else if (/^[0-9a-fA-F]{3, 40}$/.test(ref)) {
+        done(ref);
+    } else {
+        done(ref);
+    }
+}
+
+var getUglify = function(ref, done) {
+    getRef(ref, function(checkedRef) {
+        if (checkedRef === undefined) {
+            done();
+            return;
+        }
+
+        request(baseUrl + checkedRef + "/tools/node.js", function(res) {
+            if (typeof res !== "string" || res.status >= 400) {
+                console.log(res);
+                done();
+                return;
+            }
+            var start = res.indexOf("exports.FILES = [");
+            if (start === -1) {
+                done();
+                return;
+            }
+            var end = res.indexOf("]", start);
+            if (end === -1) {
+                done();
+                return;
+            }
+            var files = JSON.parse(res.substring(start + 16, end + 1).replace(/,\s*\]/, "]"));
+
+            for (var i = 0; i < files.length; i++) {
+                if (files[i].substr(0, 3) === "../") {
+                    files[i] = baseUrl + checkedRef + "/" + files[i].substr(3);
+                } else if (files[i].substr(0, 2) === "./") {
+                    files[i] = baseUrl + checkedRef + "/tools/" + files[i].substr(2);
+                } else {
+                    throw Error("Invalid file");
+                }
+                files[i] = new Promise(function(success, fail) {
+                    request(files[i], function(file, res) {
+                        if (res.status >= 400) {
+                            fail(file);
+                        }
+                        success(file);
+                    });
+                });
+            }
+
+            Promise.all(files).then(function(results) {
+                var uglify = {version: checkedRef};
+                var code = results.join("\n\n");
+                new Function("MOZ_SourceMap", "exports", "DEBUG", code)(
+                    {},
+                    uglify,
+                    !!window.UGLIFY_DEBUG
+                );
+                done(uglify, checkedRef, code);
+            });
+        });
+    });
+}
+
+var updateUglify = function(done) {
+    var ref = parseUrl().ref;
+    done = typeof done === "function" ? done : function() {};
+    if ((UglifyJS || {}).version === ref) {
+        done(ref);
+        return;
+    } else if (cache["uglify-" + ref]) {
+        UglifyJS = cache["uglify-" + ref];
+        done(ref);
+        return;
+    }
+    getUglify(ref || "master", function(uglify, ref, code) {
+        cache["uglify-" + ref] = uglify;
+        UglifyJS = uglify;
+        done(ref);
+    });
+}
+
+var updateState = function(ref) {
+    $("#uglify-checkout-status")[0].innerHTML = ref === undefined ? "Invalid version" : "Using " + ref;
+}
+
+updateUglify(updateState);
+window.onhashchange = function() {
+    updateUglify(updateState);
+}
+
+</script>
+<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js" integrity="sha384-dim6dvS4/tcx+zsOxg6VjACswgfIjLcOqWsPasbGdpsQ0ODN48p6+6/0XEjq0rAi" crossorigin="anonymous" type="text/javascript" charset="utf-8"></script>
+<script>
+(function(){
+    var state = parseUrl();
+    $("#uglify-checkout-version")[0].value = state.ref;
+    $("#uglify-version-change").click(function() {
+        var state = parseUrl();
+        state.ref = $("#uglify-checkout-version")[0].value;
+        location.hash = updateUrl(state);
+    });
+    $("#load-from-external-url").click(function() {
+        var state = parseUrl();
+        state.editor = undefined;
+        state.from = $("#external-url")[0].value;
+        editor.setReadOnly(true);
+        request(state.from, function(content) {
+           editor.setValue(content);
+           editor.setReadOnly(false); 
+        });
+        location.hash = updateUrl(state);
+    });
+    $("#uglify-url").click(function() {
+        var state = parseUrl();
+        state.editor = editor.getValue();
+        if (state.editor === "") {
+            state.editor = undefined;
+        }
+        if (state.editor.length > 2000) {
+            return alert("Too much content");
+        }
+        location.hash = updateUrl(state);
+    });
+    $("#uglify-compile").click(function() {
+        var state = parseUrl();
+        try {
+            var ast = UglifyJS.parse(editor.getValue());
+
+            if (state.compress) {
+                var compress = { warnings: options.warnings };
+                UglifyJS.merge(compress, {/* TODO get compress options */});
+                ast.figure_out_scope();
+                var sq = UglifyJS.Compressor(compress);
+                ast = sq.compress(ast);
+            }
+
+            output.setValue(ast.print_to_string());
+        } catch (e) {
+            var msg = e.message;
+
+            if (e.line || e.col) {
+                msg += "\n\nAt ";
+                if (e.line) msg += "line " + e.line + " ";
+                if (e.col) msg += "col " + e.col;
+            }
+            output.setValue(msg);
+        }
+    });
+    if (state.from) {
+        $("#external-url")[0].value = state.from;
+    }
+
+    editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.getSession().setMode("ace/mode/javascript");
+    if (state.editor) {
+        editor.setValue(state.editor);
+    } else if(state.from) {
+        editor.setReadOnly(true);
+        request(state.from, function(content) {
+           editor.setValue(content);
+           editor.setReadOnly(false); 
+        });
+    }
+
+    output = ace.edit("output");
+    output.setTheme("ace/theme/chrome");
+    output.getSession().setMode("ace/mode/javascript");
+    output.setReadOnly(true);
+    output.setValue("Minified code goes here");
+
+    editor.focus();
+})();
+</script>
+</body>
+</html>
