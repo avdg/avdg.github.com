@@ -49,6 +49,7 @@
         <pre class="col-md-10 col-sm-offset-1" id="output"></pre>
     </div>
 </div>
+<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
 <script>
 var baseUrl = "https://raw.githubusercontent.com/mishoo/UglifyJS2/";
 var cache = {};
@@ -222,7 +223,7 @@ var getUglify = function(ref, done) {
 var updateUglify = function(done) {
     var ref = parseUrl().ref;
     done = typeof done === "function" ? done : function() {};
-    if ((UglifyJS || {}).version === ref) {
+    if ((UglifyJS || {}).version === ref && typeof ref === "string") {
         done(ref);
         return;
     } else if (cache["uglify-" + ref]) {
@@ -242,13 +243,12 @@ var updateState = function(ref) {
 }
 
 </script>
-<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js" integrity="sha384-dim6dvS4/tcx+zsOxg6VjACswgfIjLcOqWsPasbGdpsQ0ODN48p6+6/0XEjq0rAi" crossorigin="anonymous" type="text/javascript" charset="utf-8"></script>
 <script>
 (function(){
     var state = parseUrl();
-    $("#uglify-checkout-version")[0].value = state.ref;
+    $("#uglify-checkout-version")[0].value = state.ref || "master";
     $("#uglify-version-change").click(function() {
         var state = parseUrl();
         state.ref = $("#uglify-checkout-version")[0].value;
