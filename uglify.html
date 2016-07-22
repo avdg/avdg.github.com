@@ -68,10 +68,10 @@ var parseUrl = function() {
         if (!/^[a-zA-Z]+$/.test(key)) continue;
         result[key] = hash[i]
             .substr(pos + 1)
-            .replace(/\\u([0-9a-fA-F]{4})/g, function(_, ch) { return String.fromCharCode(parseInt(ch, 16))})
-            .replace(/\\u\{([0-9a-fA-F]+)\}/g, function(_, ch) { if (parseInt(ch, 16) > 0xffff) { return "";} return String.fromCharCode(parseInt(ch, 16))})
-            .replace(/\\x([0-9a-fA-F]{2})/g, function(_, ch) { return String.fromCharCode(parseInt(ch, 16))})
-            .replace(/\\(.)/g, function(_, ch) {
+            .replace(/_u([0-9a-fA-F]{4})/g, function(_, ch) { return String.fromCharCode(parseInt(ch, 16))})
+            .replace(/_u\{([0-9a-fA-F]+)\}/g, function(_, ch) { if (parseInt(ch, 16) > 0xffff) { return "";} return String.fromCharCode(parseInt(ch, 16))})
+            .replace(/_x([0-9a-fA-F]{2})/g, function(_, ch) { return String.fromCharCode(parseInt(ch, 16))})
+            .replace(/_(.)/g, function(_, ch) {
                 switch(ch) {
                     case "n": return "\n";
                     case "r": return "\r";
@@ -97,26 +97,26 @@ var updateUrl = function(state) {
         }
         for (var i = 0; i < input.length; i++) {
             switch(input[i]) {
-                case "\n": output += "\\n"; continue;
-                case "\r": output += "\\r"; continue;
-                case "\t": output += "\\t"; continue;
-                case "\b": output += "\\b"; continue;
-                case "\v": output += "\\v"; continue;
-                case "\f": output += "\\f"; continue;
+                case "\n": output += "_n"; continue;
+                case "\r": output += "_r"; continue;
+                case "\t": output += "_t"; continue;
+                case "\b": output += "_b"; continue;
+                case "\v": output += "_v"; continue;
+                case "\f": output += "_f"; continue;
             }
             if (/^[a-zA-Z0-9]$/.test(input[i])) {
                 output += input[i];
             } else if (input.charCodeAt(i) <= 0xff) {
-                output += "\\x" + padding(input.charCodeAt(i).toString(16), 2);
+                output += "_x" + padding(input.charCodeAt(i).toString(16), 2);
             } else {
-                output += "\\u" + padding(input.charCodeAt(i).toString(16), 2);
+                output += "_u" + padding(input.charCodeAt(i).toString(16), 2);
             }
         }
         return output;
     }
     var hash = [];
     for (var i in state) {
-        if (!/^[a-zA-Z_\-]+$/.test(i)) continue;
+        if (!/^[a-zA-Z\-]+$/.test(i)) continue;
         if (typeof state[i] !== "string") continue;
         hash.push(i + "=" + convert(state[i]));
     }
