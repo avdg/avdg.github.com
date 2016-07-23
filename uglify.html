@@ -6,15 +6,22 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
 <style>
+#uglify-options div {
+    max-height: 200px;
+    overflow: auto;
+}
 #editor, #output {
     height: 400px;
+}
+#uglify-reset-settings-cancel {
+    display: none;
 }
 </style>
 </head>
 <body>
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-10 col-sm-offset-1">
+        <div class="col-md-10 col-md-offset-1">
             <form>
                 <div class="input-group">
                     <span class="input-group-addon" id="uglify-checkout-status">Loading...</span>
@@ -27,29 +34,120 @@
         </div>
     </div>
     <div class="row">
-        <pre class="col-md-10 col-sm-offset-1" id="editor"></pre>
+        <pre class="col-md-10 col-md-offset-1" id="editor"></pre>
     </div>
-    <div class="row">
-        <div class="col-md-10 col-sm-offset-1">
-            <form>
+    <form id="uglify-actions">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
                 <button class="btn btn-warning" type="button" id="uglify-compile">Compile</button>
-                <button class="btn btn-info" type="button" id="uglify-url">Store state in url</button>
-                <br>
+                <span class="btn-group">
+                    <button class="btn btn-info" type="button" id="uglify-url-store">Store in 🔗</button>
+                    <button class="btn btn-success" type="button" id="uglify-url-copy">Copy 🔗</button>
+                </span>
+                <span>
+                    <button class="btn btn-default" type="button" id="uglify-reset-settings-cancel">No! Cancel reset</button>
+                    <button class="btn btn-danger" type="button" id="uglify-reset-settings">Reset settings</button>
+                </span>
+                <button class="btn btn-default active " type="button" id="uglify-show-options">Options menu</button>
+            </div>
+        </div>
+        <div class="row" id="uglify-options">
+            <div class="col-md-2 col-md-offset-1">
+                <h4>Mangle</h4>
+                <label><input type="checkbox" checked id="opt-mangler"> Enable mangler</label><br>
+
+                <h4>Parse</h4>
+                <label><input type="checkbox" checked id="opt-html5"> Html 5 comments</label><br>
+                <label><input type="checkbox" checked id="opt-shebang"> Shebangs</label><br>
+                <label><input type="checkbox" id="opt-bare"> Bare returns</label><br>
+            </div>
+            <div class="col-md-2 col-md-offset-1">
+                <h4>Compress</h4>
+                <label><input type="checkbox" checked id="opt-compress"> Enable compression</label><br>
+                <label><input type="checkbox" checked id="opt-seq"> Sequences</label><br>
+                <label><input type="checkbox" checked id="opt-prop"> Properties</label><br>
+                <label><input type="checkbox" checked id="opt-dead-code"> Dead code</label><br>
+                <label><input type="checkbox" checked id="opt-drop-debugger"> Drop debugger</label><br>
+                <label><input type="checkbox" id="opt-unsafe"> Unsafe</label><br>
+                <label><input type="checkbox" id="opt-unsafe-comps"> Unsafe compares</label><br>
+                <label><input type="checkbox" checked id="opt-cond"> Conditionals</label><br>
+                <label><input type="checkbox" checked id="opt-comparisons"> Comparisons</label><br>
+                <label><input type="checkbox" checked id="opt-evaluate"> Evaluate</label><br>
+                <label><input type="checkbox" checked id="opt-bools"> Booleans</label><br>
+                <label><input type="checkbox" checked id="opt-loops"> Loops</label><br>
+                <label><input type="checkbox" checked id="opt-unused"> Unused</label><br>
+                <label><input type="checkbox" checked id="opt-hoist-funs"> Hoist functions</label><br>
+                <label><input type="checkbox" checked id="opt-keep-fargs"> Keep function arguments</label><br>
+                <label><input type="checkbox" id="opt-keep-fnames"> Keep function names</label><br>
+                <label><input type="checkbox" id="opt-hoist-vars"> Hoist vars</label><br>
+                <label><input type="checkbox" checked id="opt-if-return"> If return</label><br>
+                <label><input type="checkbox" checked id="opt-join-vars"> Join vars</label><br>
+                <label><input type="checkbox" id="opt-collapse-vars"> Collapse vars</label><br>
+                <label><input type="checkbox" checked id="opt-cascade"> Cascade</label><br>
+                <label><input type="checkbox" checked id="opt-side-effects"> Side effecst</label><br>
+                <label><input type="checkbox" id="opt-pure-getters"> Pure getters</label><br>
+                <label for="opt-pure-funcs" class="control-label">Pure functions</label>
+                <input type="text" class="form-control" id="opt-pure-funcs" placeholder="Functions without side effects">
+                <label><input type="checkbox" checked id="opt-negate-iife"> Negate iife</label><br>
+                <label><input type="checkbox" checked id="opt-screw-ie8"> Screw ie8</label><br>
+                <label><input type="checkbox" id="opt-drop-console"> Drop console</label><br>
+                <label><input type="checkbox" id="opt-angular"> Angular</label><br>
+                <label for="opt-globals" class="control-label">Globals</label>
+                <input type="text" class="form-control" id="opt-globals" placeholder="Globals">
+                <label for="opt-passes" class="control-label">Passes</label>
+                <input type="text" class="form-control" id="opt-passes" value="1">
+            </div>
+            <div class="col-md-2 col-md-offset-1">
+                <h4>Beautify and codegen</h4>
+                <label><input type="checkbox" id="opt-beautify"> Enable beautify</label><br>
+                <label for="opt-indent-start" class="control-label">Indent start</label>
+                <input type="text" class="form-control" id="opt-indent-start" value="0">
+                <label for="opt-indent-level" class="control-label">Indent level</label>
+                <input type="text" class="form-control" id="opt-indent-level" value="4">
+                <label><input type="checkbox" id="opt-quote-keys"> Quote keys</label><br>
+                <label><input type="checkbox" checked id="opt-space-colon"> Space colon</label><br>
+                <label><input type="checkbox" id="opt-ascii-only"> Ascii only</label><br>
+                <label><input type="checkbox" id="opt-unescape-regexps"> Unescape regexp</label><br>
+                <label><input type="checkbox" id="opt-inline-script"> Inline script</label><br>
+                <label for="opt-width" class="control-label">Width</label>
+                <input type="text" class="form-control" id="opt-width" value="80">
+                <label for="opt-max-line-len" class="control-label">Max line length</label>
+                <input type="text" class="form-control" id="opt-max-line-len" value="32000">
+                <label><input type="checkbox" id="opt-bracketize"> Bracketize</label><br>
+                <label><input type="checkbox" checked id="opt-semi"> Semicolons</label><br>
+                <label><input type="checkbox" id="opt-comments"> Comments</label><br>
+                <label><input type="checkbox" checked id="opt-shebang-out"> Shebang</label><br>
+                <label><input type="checkbox" id="opt-preserve"> Preserve line</label><br>
+                <label><input type="checkbox" checked id="opt-screw-ie8-out"> Screw ie8</label><br>
+                <label for="opt-preamble" class="control-label">Preamble</label>
+                <input type="text" class="form-control" id="opt-preamble" placeholder="Code inserted at start">
+                <label for="opt-quote-style" class="control-label">Quote style</label>
+                <input type="text" class="form-control" id="opt-quote-style" value="0">
+                <label><input type="checkbox" id="opt-keep-quoted-props"> Keep quoted properties</label><br>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
                 <div class="input-group">
-                    <span class="input-group-addon">Load from url</span>
+                    <span class="input-group-addon">Load code from url</span>
                     <input type="text" class="form-control" id="external-url">
                     <span class="input-group-btn">
                         <button class="btn btn-default" type="button" id="load-from-external-url">Fetch code</button>
                     </span>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+
+    </form>
     <div class="row">
-        <pre class="col-md-10 col-sm-offset-1" id="output"></pre>
+        <pre class="col-md-10 col-md-offset-1" id="output"></pre>
     </div>
 </div>
 <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/clipboard.js/1.5.12/clipboard.min.js" integrity="sha384-zD0rXhmVlFWUQYNE6qhnghclEAj+YgdpXMO/izgNBWhg9CZTYfQx/LlgPCUfSH7V" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js" integrity="sha384-dim6dvS4/tcx+zsOxg6VjACswgfIjLcOqWsPasbGdpsQ0ODN48p6+6/0XEjq0rAi" crossorigin="anonymous" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdn.jsdelivr.net/ace/1.2.3/min/ext-language_tools.js" integrity="sha384-Zz3lDIBdceaPA8mVxpDqqXSxv722PSbLMRco3RXsBhNUbuZnkX4xhUOtEZUEcPHo" crossorigin="anonymous" type="text/javascript" charset="utf-8"></script>
 <script>
 var baseUrl = "https://raw.githubusercontent.com/mishoo/UglifyJS2/";
 var cache = {};
@@ -66,23 +164,60 @@ var parseUrl = function() {
         var pos = hash[i].indexOf("_");
         var key = hash[i].substr(0, pos);
         if (!/^[a-zA-Z]+$/.test(key)) continue;
-        result[key] = hash[i]
-            .substr(pos + 1)
-            .replace(/_u([0-9a-fA-F]{4})/g, function(_, ch) { return String.fromCharCode(parseInt(ch, 16))})
-            .replace(/_u\{([0-9a-fA-F]+)\}/g, function(_, ch) { if (parseInt(ch, 16) > 0xffff) { return "";} return String.fromCharCode(parseInt(ch, 16))})
-            .replace(/_x([0-9a-fA-F]{2})/g, function(_, ch) { return String.fromCharCode(parseInt(ch, 16))})
-            .replace(/_s([0-9a-fA-F])/g, function(_, ch) { o = " "; for (var i = parseInt(ch, 16);i > 0;i--) {o += " "} return o;})
-            .replace(/_(.)/g, function(_, ch) {
-                switch(ch) {
-                    case "n": return "\n";
-                    case "r": return "\r";
-                    case "t": return "\t";
-                    case "b": return "\b";
-                    case "v": return "\u000b";
-                    case "f": return "\f";
-                    default: return ch;
-                }
-            });
+        result[key] = "";
+        var value = hash[i].substr(pos + 1);
+        for (var j = 0; j < value.length; j++) {
+            if (value[j] !== "_") {
+                result[key] += value[j];
+                continue;
+            } else if (++j >= value.length) {
+                break;
+            }
+            switch(value[j]) {
+                case "n": result[key] += "\n"; continue;
+                case "r": result[key] += "\r"; continue;
+                case "t": result[key] += "\t"; continue;
+                case "b": result[key] += "\b"; continue
+                case "v": result[key] += "\u000b"; continue;
+                case "f": result[key] += "\f"; continue;
+                case "s":
+                    result[key] += " ";
+                    for (var k = parseInt(value[++j], 16);k > 0;k--) {
+                        result[key] += " ";
+                    }
+                    continue;
+                case "x":
+                    var tmp = value.substr(++j, 2); j++;
+                    if (tmp.length === 2 && /^[A-F0-9a-f]{2}$/.test(tmp)) {
+                        result[key] += String.fromCharCode(parseInt(tmp, 16));
+                    }
+                    continue;
+                case "u":
+                    if (value[++j] === "{") {
+                        var content = "";
+                        while(value[++j] != "}") {
+                            if (content !== false && /^[A-F0-9a-f]$/.test(value[j])) {
+                                content += value[j];
+                            }
+                            invalid = false;
+                        }
+                        if (content === false) {
+                            continue;
+                        }
+                        content = parseInt(content, 16);
+                        if (content <= 0xffff) {
+                            result[key] += String.fromCharCode(content);
+                        }
+                    } else {
+                        var tmp = value.substr(j, 4); j += 3;
+                        if (tmp.length === 4 && /^[A-F0-9a-f]{4}$/.test(tmp)) {
+                            result[key] += String.fromCharCode(parseInt(tmp, 16));
+                        }
+                    }
+                    continue;
+                default: result[key] += value[j];
+            }
+        }
     }
 
     return result;
@@ -104,6 +239,7 @@ var updateUrl = function(state) {
                 case "\b": output += "_b"; continue;
                 case "\v": output += "_v"; continue;
                 case "\f": output += "_f"; continue;
+                case "_": output += "__"; continue;
                 case " ":
                     var c = 0;
                     while (c < 15 && i < input.length && input[i + 1] === " ") {
@@ -181,7 +317,6 @@ var getUglify = function(ref, done) {
 
         request(baseUrl + urlRef + "/tools/node.js", function(res) {
             if (typeof res !== "string" || res.status >= 400) {
-                console.log(res);
                 done();
                 return;
             }
@@ -252,73 +387,324 @@ var updateUglify = function(done, check) {
 
 var updateState = function(ref) {
     $("#uglify-checkout-status")[0].innerHTML = ref === undefined ? "Invalid version" : "Using " + ref;
-}
+    document.getElementById("uglify-url-copy").setAttribute("data-clipboard-text", location.toString());
+};
 
-</script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js" integrity="sha384-dim6dvS4/tcx+zsOxg6VjACswgfIjLcOqWsPasbGdpsQ0ODN48p6+6/0XEjq0rAi" crossorigin="anonymous" type="text/javascript" charset="utf-8"></script>
-<script>
 (function(){
+    var optionsBinary = {
+        opt_html5:   {type: "parser", url: "html",    uglify: "html5_comments"},
+        opt_shebang: {type: "parser", url: "shebang", uglify: "shebang"},
+        opt_bare:    {type: "parser", url: "bare" ,   uglify: "bare_returns"},
+        opt_compress: {type: "options", url: "compr",  uglify: "compress"},
+        opt_mangler:  {type: "options", url: "mangle", uglify: "mangle"},
+        opt_seq:           {type: "compress", url: "seq",           uglify: "sequences"},
+        opt_prop:          {type: "compress", url: "prop",          uglify: "properties"},
+        opt_dead_code:     {type: "compress", url: "deadcode",      uglify: "dead_code"},
+        opt_drop_debugger: {type: "compress", url: "dropdebug",     uglify: "drop_debugger"},
+        opt_unsafe:        {type: "compress", url: "unsafe",        uglify: "unsafe"},
+        opt_unsafe_comps:  {type: "compress", url: "unsafecomps",   uglify: "unsafe_comps"},
+        opt_cond:          {type: "compress", url: "cond",          uglify: "conditionals"},
+        opt_comparisons:   {type: "compress", url: "comp",          uglify: "comparisons"},
+        opt_evaluate:      {type: "compress", url: "evaluate",      uglify: "evaluate"},
+        opt_bools:         {type: "compress", url: "bool",          uglify: "booleans"},
+        opt_loops:         {type: "compress", url: "loops",         uglify: "loops"},
+        opt_unused:        {type: "compress", url: "unused",        uglify: "unused"},
+        opt_hoist_funs:    {type: "compress", url: "hoist-funs",    uglify: "hoist_funs"},
+        opt_keep_fargs:    {type: "compress", url: "keep-fargs",    uglify: "keep_fargs"},
+        opt_keep_fnames:   {type: "compress", url: "keep-fnames",   uglify: "keep_fnames"},
+        opt_hoist_vars:    {type: "compress", url: "hoist-vars",    uglify: "hoist_vars"},
+        opt_if_return:     {type: "compress", url: "if-return",     uglify: "if_return"},
+        opt_join_vars:     {type: "compress", url: "join-vars",     uglify: "join_vars"},
+        opt_collapse_vars: {type: "compress", url: "collapse-vars", uglify: "collapse_vars"},
+        opt_cascade:       {type: "compress", url: "cascade",       uglify: "cascade"},
+        opt_side_effects:  {type: "compress", url: "side-effects",  uglify: "side_effects"},
+        opt_pure_getters:  {type: "compress", url: "pure-getters",  uglify: "pure_getters"},
+        opt_negate_iife:   {type: "compress", url: "negate-iife",   uglify: "negate_iife"},
+        opt_screw_ie8:     {type: "compress", url: "screw",         uglify: "screw_ie8"},
+        opt_drop_console:  {type: "compress", url: "drop-console",  uglify: "drop_console"},
+        opt_angular:       {type: "compress", url: "angular",       uglify: "angular"},
+        opt_beautify:          {type: "codegen", url: "beautify",        uglify: "beautify"},
+        opt_quote_keys:        {type: "codegen", url: "quotekey",        uglify: "quote_keys"},
+        opt_space_colon:       {type: "codegen", url: "spacecol",        uglify: "space_colon"},
+        opt_ascii_only:        {type: "codegen", url: "ascii",           uglify: "ascii_only"},
+        opt_unescape_regexps:  {type: "codegen", url: "unescape-regexp", uglify: "unescape_regexps"},
+        opt_inline_script:     {type: "codegen", url: "inline-script",   uglify: "inline_script"},
+        opt_bracketize:        {type: "codegen", url: "bracketize",      uglify: "bracketize"},
+        opt_semi:              {type: "codegen", url: "semi",            uglify: "semicolons"},
+        opt_comments:          {type: "codegen", url: "comments",        uglify: "comments"},
+        opt_shebang_out:       {type: "codegen", url: "shebang-out",     uglify: "shebang"},
+        opt_preserve:          {type: "codegen", url: "preserve",        uglify: "preserve_line"},
+        opt_screw_ie8_out:     {type: "codegen", url: "screw-out",       uglify: "screw_ie8"},
+        opt_keep_quoted_props: {type: "codegen", url: "keep-quoteprops", uglify: "keep_quoted_props"},
+    };
+    var optionsText = {
+        opt_pure_funcs: {type: "compress", convertInt:!1, url: "pure-funcs", uglify: "pure_funcs"},
+        opt_globals:    {type: "compress", convertInt:!1, url: "globals",    uglify: "global_defs"},
+        opt_passes:     {type: "compress", convertInt:!0, url: "passes",     uglify: "passes"},
+        opt_indent_start: {type: "codegen", convertInt:!0, url: "indent-start", uglify: "indent_start"},
+        opt_indent_level: {type: "codegen", convertInt:!0, url: "indent-level", uglify: "indent_level"},
+        opt_width:        {type: "codegen", convertInt:!0, url: "width",        uglify: "width"},
+        opt_max_line_len: {type: "codegen", convertInt:!0, url: "max-line-len", uglify: "max_line_len"},
+        opt_preamble:     {type: "codegen", convertInt:!1, url: "preamble",     uglify: "preamble"},
+        opt_quote_style:  {type: "codegen", convertInt:!0, url: "quote_style",  uglify: "quote_style"},
+    };
     var state = parseUrl();
-    $("#uglify-checkout-version")[0].value = state.ref || "master";
-    $("#uglify-version-change").click(function() {
-        var state = parseUrl();
-        state.ref = $("#uglify-checkout-version")[0].value;
-        location.hash = updateUrl(state);
-    });
-    $("#load-from-external-url").click(function() {
-        var state = parseUrl();
-        state.editor = undefined;
-        state.from = $("#external-url")[0].value;
-        editor.setReadOnly(true);
-        request(state.from, function(content) {
-           editor.setValue(content);
-           editor.setReadOnly(false); 
-        });
-        location.hash = updateUrl(state);
-    });
-    $("#uglify-url").click(function() {
-        var state = parseUrl();
+    var clipboardCopyUrl;
+    var hideResetCancel = function() {
+        var resetCancelButton = document.getElementById("uglify-reset-settings-cancel");
+        resetCancelButton.style.display = "none";
+        $(resetCancelButton.parentElement).removeClass("btn-group");
+    }
+    
+    var storeInHash = function() {
+        state = parseUrl();
         state.editor = editor.getValue();
         if (state.editor === "") {
             state.editor = undefined;
+        }
+        var element;
+        state.bool = "";
+        for (var i in optionsBinary) {
+            element = document.getElementById(i.replace(/_/g, "-"));
+            if (element.checked !== element.defaultChecked) {
+                state.bool += optionsBinary[i].url + (element.checked ? "0" : "1");
+            }
+        }
+        state.set = "";
+        for (var i in optionsText) {
+            element = document.getElementById(i.replace(/_/g, "-"));
+            if (element.value !== element.defaultValue) {
+                if (state.set !== "") {
+                    state.set += "z"
+                }
+                state.set += optionsText[i].url + "\t" + ("" + element.value).replace(/\z/g, "zz");
+            }
         }
         var hash = updateUrl(state);
         if (hash.length > 8000) {
             return alert("Too much content");
         }
         location.hash = hash;
-    });
-    $("#uglify-compile").click(function() {
-        var state = parseUrl();
-        try {
-            var ast = UglifyJS.parse(editor.getValue());
+    }
 
-            if (state.compress) {
+    $("#uglify-checkout-version")[0].value = state.ref || "master";
+    $("#uglify-version-change").click(function() {
+        state = parseUrl();
+        state.ref = $("#uglify-checkout-version")[0].value;
+        location.hash = updateUrl(state);
+    });
+    $("#load-from-external-url").click(function() {
+        state = parseUrl();
+        state.editor = undefined;
+        state.from = $("#external-url")[0].value;
+        editor.setReadOnly(true);
+        request(state.from, function(content) {
+           editor.setValue(content);
+           editor.setReadOnly(false);
+        });
+        location.hash = updateUrl(state);
+    });
+    $("#uglify-url-store").click(function() {
+        storeInHash();
+    });
+    (function /* loadSettings */ () {
+        var binarySettings = ("" + state.bool).split(/[01]/);
+        for (var i = 0; i < binarySettings.length; i++) {
+            for (var j in optionsBinary) {
+                if (optionsBinary[j].url !== binarySettings[i]) {
+                    continue;
+                }
+                var element = document.getElementById(j.replace(/_/g, "-"));
+                element.checked = !element.defaultChecked;
+                break;
+            }
+        }
+        var textSettings = ("" + state.set).split(/z(?!z)/).reduce(function(c, a) {
+            var decoded = a.replace(/zz/g, "z");
+            if (c.concat) {
+                c.parts[c.parts.length - 1] += decoded;
+            } else {
+                c.parts.push(decoded)
+            }
+            var pos = a.length - 1;
+            for(;a[pos] === "z";pos--){}
+            c.concat = !((a.length - pos) % 2);
+            return c;
+        },{parts: [], concat: false});
+        textSettings = textSettings.parts;
+        for (var i = 0; i < textSettings.length; i++) {
+            var pos = textSettings[i].indexOf("\t");
+            pos = pos === -1 ? textSettings[i].length : pos;
+            var key = textSettings[i].substr(0, pos);
+            var value = textSettings[i].substr(pos + 1);
+            for (var j in optionsText) {
+                if (optionsText[j].url !== key) {
+                    continue;
+                }
+                var element = document.getElementById(j.replace(/_/g, "-"));
+                element.value = value;
+                break;
+            }
+        }
+    })();
+    $("#uglify-compile").click(function() {
+        try {
+            var options = {
+                options: {},
+                parser: {},
+                compress: {
+                    warnings: true
+                },
+                codegen: {}
+            };
+            for (var i in optionsBinary) {
+                options[optionsBinary[i].type][optionsBinary[i].uglify] = document.getElementById(i.replace(/_/g, "-")).checked;
+            }
+            for (var i in optionsText) {
+                options[optionsText[i].type][optionsText[i].uglify] = document.getElementById(i.replace(/_/g, "-")).value;
+                if (optionsText[i].convertInt) {
+                    options[optionsText[i].type][optionsText[i].uglify] = parseInt(options[optionsText[i].type][optionsText[i].uglify]);
+                }
+            }
+            var input = editor.getValue();
+            var ast = UglifyJS.parse(input, options.parser);
+
+            if (options.options.compress) {
+                if (typeof options.compress.global_defs === "string") {
+                    options.compress.global_defs = options.compress.global_defs.split(",");
+                } else {
+                    options.compress.global_defs = undefined;
+                }
                 var compress = { warnings: options.warnings };
-                UglifyJS.merge(compress, {/* TODO get compress options */});
+                UglifyJS.merge(compress, options.compress);
                 ast.figure_out_scope();
-                var sq = UglifyJS.Compressor(compress);
+                var sq = UglifyJS.Compressor(compress, options.compress);
                 ast = sq.compress(ast);
             }
 
+            if (options.options.mangle) {
+                ast.figure_out_scope();
+                ast.compute_char_frequency();
+                ast.mangle_names();
+            }
+
+            var stream = UglifyJS.OutputStream(options.codegen);
+            ast.print(stream);
+            var generated = stream.toString();
             output.getSession().setMode("ace/mode/javascript");
-            output.setValue(ast.print_to_string());
+            output.setValue(generated);
+
+            // Pop up warning in editor
+            var errors = [];
+            var count = 0;
+            for (var i in sq.warnings_produced) {
+                if (!/\[.*:[0-9]+,[0-9]+\]$/.test(i)) {
+                    continue;
+                }
+                count++;
+                var line_pos = i.lastIndexOf(":");
+                var col_pos = i.lastIndexOf(",");
+                var msg_pos = i.lastIndexOf(" [");
+                errors.push({
+                    row: i.substring(line_pos + 1, col_pos) - 1,
+                    text: "UglifyJS compressor: " + i.substr(0, msg_pos),
+                    type: "warning"
+                });
+            }
+            errors.push({
+                row: 0,
+                text: count + " UglifyJS compression warnings found.\n" +
+                    (input.length - generated.length) + " characters were removed (" +
+                    (Math.round((input.length - generated.length) / input.length * 10000) /100) +
+                    "%).",
+                type: "info"
+            });
+            editor.getSession().setAnnotations(errors);
         } catch (e) {
             var msg = e.message;
 
             if (e.line || e.col) {
                 msg += "\n\nAt ";
-                if (e.line) msg += "line " + e.line + " ";
+                if (e.line) {
+                    msg += "line " + e.line + " ";
+                    editor.getSession().setAnnotations([{
+                        row: e.line - 1,
+                        text: "UglifyJS error: " + e.message,
+                        type: "error"
+                    }, {
+                        row: 0,
+                        text: "UglifyJS error at line " + e.line,
+                        type: "info"
+                    }]);
+                }
                 if (e.col) msg += "col " + e.col;
             }
 
             output.getSession().setMode("ace/mode/text");
             output.setValue(msg);
+            throw e;
         }
     });
+    $("#uglify-show-options").click(function() {
+        if (this.classList.contains("active")) {
+            $(this).removeClass("active");
+            document.getElementById("uglify-options").style.display = "none";
+        } else {
+            $(this).addClass("active");
+            document.getElementById("uglify-options").style.display = "inherit";
+        }
+    });
+    var doReset = false;
+    var doResetTimers = [];
+    var resetResetState = function() {
+        if (!doReset) return;
+        hideResetCancel();
+        document.getElementById("uglify-reset-settings").innerHTML = "Reset settings";
+        doReset = false;
+        var timer;
+        while ((timer = doResetTimers.pop()) !== undefined) {
+            window.clearTimeout(timer);
+        }
+    }
+    $("#uglify-reset-settings").click(function() {
+        var self = this;
+        if (!doReset) {
+            var resetCancelButton = document.getElementById("uglify-reset-settings-cancel");
+            doReset = true;
+            self.innerHTML = "Click to confirm resetting settings";
+            resetCancelButton.style.display = "inherit";
+            $(resetCancelButton.parentElement).addClass("btn-group");
+            doResetTimers.push(
+                window.setTimeout(resetResetState, 30000)
+            );
+            return;
+        }
+        resetResetState();
+        var element;
+        for (var i in optionsBinary) {
+            element = document.getElementById(i.replace(/_/g, "-"));
+            element.checked = element.defaultChecked;
+        }
+        for (var i in optionsText) {
+            element = document.getElementById(i.replace(/_/g, "-"));
+            element.value = element.defaultValue;
+        }
+    });
+    hideResetCancel();
+    $("#uglify-reset-settings-cancel").click(resetResetState);
     if (state.from) {
         $("#external-url")[0].value = state.from;
+    }
+    if (typeof Clipboard === "function") {
+        clipboardCopyUrl = new Clipboard("#uglify-url-copy", {
+            text: function(trigger) {
+                storeInHash();
+            }
+        });
+    } else {
+        var uglifyUrlCopy = document.getElementById("uglify-url-copy");
+        uglifyUrlCopy.style.display = "none";
+        $(uglifyUrlCopy.parentElement).removeClass("btn-group");
     }
 
     updateUglify(updateState, true);
@@ -326,7 +712,16 @@ var updateState = function(ref) {
         updateUglify(updateState);
     }
 
+    ace.require("ace/ext/language_tools");
     editor = ace.edit("editor");
+    output = ace.edit("output");
+    editor.$blockScrolling = output.$blockScrolling = Infinity; // Disable warning
+
+    editor.setOptions({
+        enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: false
+    });
     editor.setTheme("ace/theme/monokai");
     editor.getSession().setMode("ace/mode/javascript");
     if (state.editor) {
@@ -335,14 +730,14 @@ var updateState = function(ref) {
         editor.setReadOnly(true);
         request(state.from, function(content) {
            editor.setValue(content);
-           editor.setReadOnly(false); 
+           editor.setReadOnly(false);
         });
     }
 
-    output = ace.edit("output");
     output.setTheme("ace/theme/chrome");
     output.getSession().setMode("ace/mode/markdown");
     output.setReadOnly(true);
+    output.setOption("wrap", true)
     output.setValue("Minified code goes here after pressing the compile button\n\n" +
                     "Shortcuts can be found on https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts\n" +
                     "A nicer looking one can be found on https://duckduckgo.com/?q=ace+editor+cheat+sheet&iax=1");
