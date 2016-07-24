@@ -177,7 +177,7 @@ var parseUrl = function() {
                 case "n": result[key] += "\n"; continue;
                 case "r": result[key] += "\r"; continue;
                 case "t": result[key] += "\t"; continue;
-                case "b": result[key] += "\b"; continue
+                case "b": result[key] += "\b"; continue;
                 case "v": result[key] += "\u000b"; continue;
                 case "f": result[key] += "\f"; continue;
                 case "s":
@@ -621,7 +621,9 @@ var updateState = function(ref) {
                     "%).",
                 type: "info"
             });
-            editor.getSession().setAnnotations(errors);
+            editor.getSession().setAnnotations(
+                editor.getSession().getAnnotations().concat(errors)
+            );
         } catch (e) {
             var msg = e.message;
 
@@ -629,15 +631,17 @@ var updateState = function(ref) {
                 msg += "\n\nAt ";
                 if (e.line) {
                     msg += "line " + e.line + " ";
-                    editor.getSession().setAnnotations([{
-                        row: e.line - 1,
-                        text: "UglifyJS error: " + e.message,
-                        type: "error"
-                    }, {
-                        row: 0,
-                        text: "UglifyJS error at line " + e.line,
-                        type: "info"
-                    }]);
+                    editor.getSession().setAnnotations(
+                        editor.getSession().getAnnotations().concat([{
+                            row: e.line - 1,
+                            text: "UglifyJS error: " + e.message,
+                            type: "error"
+                        }, {
+                            row: 0,
+                            text: "UglifyJS error at line " + e.line,
+                            type: "info"
+                        }])
+                    );
                 }
                 if (e.col) msg += "col " + e.col;
             }
