@@ -23,11 +23,11 @@
     <div class="row">
         <div class="col-md-10 col-md-offset-1">
             <form>
-                <div class="input-group">
+                <div class="input-group" id="uglify-statusbar">
                     <span class="input-group-addon" id="uglify-checkout-status">Loading...</span>
-                    <input type="text" class="form-control" id="uglify-checkout-version">
+                    <input type="text" class="form-control" id="uglify-checkout-version" placeholder="(ref:) 572b97b master harmony v6.7.0 (pull request:) PR1234 #1234">
                     <span class="input-group-btn">
-                        <button class="btn btn-default" type="button" id="uglify-version-change">Change version</button>
+                        <button class="btn btn-default" type="submit" id="uglify-version-change">Change version</button>
                     </span>
                 </div>
             </form>
@@ -39,7 +39,9 @@
     <form id="uglify-actions">
         <div class="row">
             <div class="col-md-10 col-md-offset-1">
-                <button class="btn btn-warning" type="button" id="uglify-compile">Compile</button>
+                <p class="bg-warning hidden" id="uglify-hash-warning">The content in the editor was too long and has been kept out the url</p>
+                <p class="bg-danger hidden" id="uglify-hash-error">Current setup could not be expressed in a url</p>
+                <button class="btn btn-warning disabled" type="button" id="uglify-compile">Compile</button>
                 <span class="btn-group">
                     <button class="btn btn-info" type="button" id="uglify-url-store">Store in 🔗</button>
                     <button class="btn btn-success" type="button" id="uglify-url-copy">Copy 🔗</button>
@@ -222,7 +224,7 @@ var parseUrl = function() {
 
     return result;
 };
-var updateUrl = function(state) {
+var getHash = function(state) {
     var convert = function(input) {
         var output = "";
         var padding = function(input, length) {
@@ -261,7 +263,7 @@ var updateUrl = function(state) {
     var hash = [];
     for (var i in state) {
         if (!/^[a-zA-Z]+$/.test(i)) continue;
-        if (typeof state[i] !== "string") continue;
+        if (typeof state[i] !== "string" || state[i] === "") continue;
         hash.push(i + "_" + convert(state[i]));
     }
     return "#" + hash.join("-");
@@ -300,7 +302,7 @@ var getRef = function(ref, done) {
             var data = JSON.parse(res);
             done((data.head || {}).sha);
         });
-    } else if (/[\0-\x20\*\.:\?\~\[\x7f-\uffff]/.test(ref)) {
+    } else if (/[\0-\x20\*:\?\~\[\x7f-\uffff]/.test(ref)) {
         done();
     } else {
         done(ref);
@@ -375,7 +377,7 @@ var updateUglify = function(done, check) {
         done(ref);
         return;
     }
-    if (check && /^(?:\s*\^)*\s*[0-9a-fA-F]{3,40}(?:\s*\^)*\s*$|[\0-\x20\*\.:\?\~\[\\\{\}\x7f-\uffff]/.test(ref) && !confirm("Do you want to load external code from " + ref + "? This might be unsafe!")) {
+    if (check && /^(?:\s*\^)*\s*[0-9a-fA-F]{3,40}(?:\s*\^)*\s*$|[\0-\x20\*:\?\~\[\\\{\}\x7f-\uffff]|\.{2,}/.test(ref) && !confirm("Do you want to load external code from " + ref + "? This might be unsafe!")) {
         return done();
     }
     getUglify(ref || "master", function(uglify, ref, code) {
@@ -386,7 +388,15 @@ var updateUglify = function(done, check) {
 };
 
 var updateState = function(ref) {
-    $("#uglify-checkout-status")[0].innerHTML = ref === undefined ? "Invalid version" : "Using " + ref;
+    if (ref === undefined) {
+        $("#uglify-checkout-status")[0].innerHTML = "Invalid version";
+        $("#uglify-compile").addClass("disabled");
+        $("#uglify-statusbar").removeClass("has-success").addClass("has-error");
+    } else {
+        $("#uglify-checkout-status")[0].innerHTML = "Using " + ref;
+        $("#uglify-compile").removeClass("disabled");
+        $("#uglify-statusbar").removeClass("has-error").addClass("has-success");
+    }
     document.getElementById("uglify-url-copy").setAttribute("data-clipboard-text", location.toString());
 };
 
@@ -458,6 +468,28 @@ var updateState = function(ref) {
     var blockUglifyAnnotation = function(a) {
         return (a || {}).uglify !== true;
     };
+    var updateUrl = function() {
+        var hash = getHash(state);
+        if (hash.length > 1e4) {
+            var edit = state.editor;
+            state.editor = undefined;
+            hash = getHash(state);
+            state.editor = edit;
+            if (hash.length > 1e4) {
+                $("#uglify-hash-warning").addClass("hidden");
+                $("#uglify-hash-error").removeClass("hidden");
+                return "";
+            } else {
+                $("#uglify-hash-warning").removeClass("hidden");
+                $("#uglify-hash-error").addClass("hidden");
+            }
+        } else {
+            $("#uglify-hash-warning").addClass("hidden");
+            $("#uglify-hash-error").addClass("hidden");
+        }
+
+        return hash;
+    }
     
     var storeInHash = function() {
         state = parseUrl();
@@ -484,9 +516,6 @@ var updateState = function(ref) {
             }
         }
         var hash = updateUrl(state);
-        if (hash.length > 8000) {
-            return alert("Too much content");
-        }
         location.hash = hash;
     }
 
