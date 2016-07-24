@@ -221,7 +221,7 @@ var parseUrl = function() {
     }
 
     return result;
-}
+};
 var updateUrl = function(state) {
     var convert = function(input) {
         var output = "";
@@ -230,7 +230,7 @@ var updateUrl = function(state) {
                 input = "0" + input;
             }
             return input;
-        }
+        };
         for (var i = 0; i < input.length; i++) {
             switch(input[i]) {
                 case "\n": output += "_n"; continue;
@@ -257,7 +257,7 @@ var updateUrl = function(state) {
             }
         }
         return output;
-    }
+    };
     var hash = [];
     for (var i in state) {
         if (!/^[a-zA-Z]+$/.test(i)) continue;
@@ -383,7 +383,7 @@ var updateUglify = function(done, check) {
         UglifyJS = uglify;
         done(ref);
     });
-}
+};
 
 var updateState = function(ref) {
     $("#uglify-checkout-status")[0].innerHTML = ref === undefined ? "Invalid version" : "Using " + ref;
@@ -454,7 +454,10 @@ var updateState = function(ref) {
         var resetCancelButton = document.getElementById("uglify-reset-settings-cancel");
         resetCancelButton.style.display = "none";
         $(resetCancelButton.parentElement).removeClass("btn-group");
-    }
+    };
+    var blockUglifyAnnotation = function(a) {
+        return (a || {}).uglify !== true;
+    };
     
     var storeInHash = function() {
         state = parseUrl();
@@ -595,7 +598,8 @@ var updateState = function(ref) {
                     errors.push({
                         row: i.substring(line_pos + 1, col_pos) - 1,
                         text: "UglifyJS compressor: " + i.substr(0, msg_pos),
-                        type: "warning"
+                        type: "warning",
+                        uglify: true
                     });
                 }
             }
@@ -619,10 +623,11 @@ var updateState = function(ref) {
                     (input.length - generated.length) + " characters were removed (" +
                     (Math.round((input.length - generated.length) / input.length * 10000) /100) +
                     "%).",
-                type: "info"
+                type: "info",
+                uglify: true
             });
             editor.getSession().setAnnotations(
-                editor.getSession().getAnnotations().concat(errors)
+                editor.getSession().getAnnotations().filter(blockUglifyAnnotation).concat(errors)
             );
         } catch (e) {
             var msg = e.message;
@@ -632,14 +637,16 @@ var updateState = function(ref) {
                 if (e.line) {
                     msg += "line " + e.line + " ";
                     editor.getSession().setAnnotations(
-                        editor.getSession().getAnnotations().concat([{
+                        editor.getSession().getAnnotations().filter(blockUglifyAnnotation).concat([{
                             row: e.line - 1,
                             text: "UglifyJS error: " + e.message,
-                            type: "error"
+                            type: "error",
+                            uglify: true
                         }, {
                             row: 0,
                             text: "UglifyJS error at line " + e.line,
-                            type: "info"
+                            type: "info",
+                            uglify: true
                         }])
                     );
                 }
