@@ -568,6 +568,8 @@ var updateState = function(ref) {
             }
             var input = editor.getValue();
             var ast = UglifyJS.parse(input, options.parser);
+            var errors = [];
+            var count = 0;
 
             if (options.options.compress) {
                 if (typeof options.compress.global_defs === "string") {
@@ -580,6 +582,22 @@ var updateState = function(ref) {
                 ast.figure_out_scope();
                 var sq = UglifyJS.Compressor(compress, options.compress);
                 ast = sq.compress(ast);
+
+                // Pop up warning in editor
+                for (var i in sq.warnings_produced) {
+                    if (!/\[.*:[0-9]+,[0-9]+\]$/.test(i)) {
+                        continue;
+                    }
+                    count++;
+                    var line_pos = i.lastIndexOf(":");
+                    var col_pos = i.lastIndexOf(",");
+                    var msg_pos = i.lastIndexOf(" [");
+                    errors.push({
+                        row: i.substring(line_pos + 1, col_pos) - 1,
+                        text: "UglifyJS compressor: " + i.substr(0, msg_pos),
+                        type: "warning"
+                    });
+                }
             }
 
             if (options.options.mangle) {
@@ -594,23 +612,7 @@ var updateState = function(ref) {
             output.getSession().setMode("ace/mode/javascript");
             output.setValue(generated);
 
-            // Pop up warning in editor
-            var errors = [];
-            var count = 0;
-            for (var i in sq.warnings_produced) {
-                if (!/\[.*:[0-9]+,[0-9]+\]$/.test(i)) {
-                    continue;
-                }
-                count++;
-                var line_pos = i.lastIndexOf(":");
-                var col_pos = i.lastIndexOf(",");
-                var msg_pos = i.lastIndexOf(" [");
-                errors.push({
-                    row: i.substring(line_pos + 1, col_pos) - 1,
-                    text: "UglifyJS compressor: " + i.substr(0, msg_pos),
-                    type: "warning"
-                });
-            }
+            // Additional info in editor
             errors.push({
                 row: 0,
                 text: count + " UglifyJS compression warnings found.\n" +
