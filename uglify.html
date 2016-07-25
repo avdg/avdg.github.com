@@ -613,6 +613,7 @@ document.onload = function(){
     var searchBox = $("#uglify-checkout-version");
     searchBox[0].value = state.ref || "master";
     searchBox.autocomplete({
+        delay: 50,
         source: function(req, res) {
             var points = {};
             function score(a) {
