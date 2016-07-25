@@ -536,6 +536,13 @@ var getRefsAndUpdateState = function() {
         if (cache.requestRef === "" || cache.sleep || statusbar.hasClass("has-warning")) {
             return;
         }
+        if (changes.length === 0) {
+            return;
+        }
+        if (!Array.isArray(cache.refsChanges)) {
+            cache.refsChanges = [];
+        }
+        cache.refsChanges.push(changes);
         for (var i = 0; i < changes.length; i++) {
             if (changes[i].ref === cache.requestRef) {
                 $("#uglify-checkout-status")[0].innerHTML = $("#uglify-checkout-status")[0].innerHTML.replace("(", "(outdated ");
