@@ -468,7 +468,7 @@ var updateState = function(result) {
 var getRefsAndUpdateState = function() {
     getRefs(function(changes) {
         var statusbar = $("#uglify-statusbar");
-        if (ref === "" || cache.sleep || statusbar.hasClass("has-warning")) {
+        if (cache.requestRef === "" || cache.sleep || statusbar.hasClass("has-warning")) {
             return;
         }
         for (var i = 0; i < changes.length; i++) {
