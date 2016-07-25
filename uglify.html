@@ -699,8 +699,16 @@ document.onload = function(){
     });
     $("#uglify-version-change").click(function() {
         state = parseUrl();
+        var oldRef = state.ref;
         state.ref = $("#uglify-checkout-version")[0].value;
-        location.hash = updateUrl(state);
+        var updatedHash = updateUrl(state);
+        if (location.hash !== updatedHash) {
+            location.hash = updateUrl(state);
+        } else if (oldRef === state.ref && $("#uglify-statusbar").hasClass("has-warning")) {
+            var event = document.createEvent("HTMLEvents");
+            event.initEvent("hashchange");
+            window.dispatchEvent(event);
+        }
     });
     $("#load-from-external-url").click(function() {
         state = parseUrl();
@@ -927,9 +935,9 @@ document.onload = function(){
     }
 
     updateUglify(updateState, true);
-    window.onhashchange = function() {
+    window.addEventListener("hashchange",  function() {
         updateUglify(updateState);
-    }
+    }, false);
 
     ace.require("ace/ext/language_tools");
     editor = ace.edit("editor");
