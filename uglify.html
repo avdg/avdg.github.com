@@ -454,7 +454,12 @@ var updateState = function(result) {
         var ref;
         if (shaRef.test(result.ref) && result.request !== result.ref) {
             ref = result.ref.substr(0, 10) + " (" + result.request + ")";
-            cache.requestRef = result.request;
+            var tmp;
+            if ((tmp = prRef.exec(result.request))) {
+                cache.requestRef = "PR" + tmp[1];
+            } else {
+                cache.requestRef = result.request;
+            }
         } else {
             ref = result.ref;
         }
