@@ -619,6 +619,9 @@ document.onload = function(){
             function score(a) {
                 if (points[a]) {
                     return points[a];
+                } else if (a === req.term) {
+                    points[a] = 10 * a.length + 10;
+                    return;
                 }
                 points[a] = 0;
                 for (var i = 0; a[i] === req.term[i] && i < req.term.length; i++) {
@@ -628,7 +631,7 @@ document.onload = function(){
             }
             if (typeof cache.versions !== "object") {
                 res([]);
-                return
+                return;
             }
             var prResult;
             if ((prResult = prRef.exec(req.term)) !== null) {
