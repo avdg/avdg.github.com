@@ -373,7 +373,8 @@ var getRefs = function(done, warnings) {
         if (res.status !== 200 && res.status !== 304) {
             return done({success: false, updated: false, error: res.status, res: res});
         } else if (res.status === 304 && typeof cache.versions === "object") {
-            return done({success: true, updated: false, error: false, res: res});
+            done({success: true, updated: false, error: false, res: res});
+            return;
         } else if (typeof cache.versions !== "object") {
             cache.versions = {};
             doNotify = true;
@@ -390,7 +391,7 @@ var getRefs = function(done, warnings) {
                 console.debug(i + " is not used as reference");
             }
         }
-        done(log);
+        done({success: true, updated: log, error: false, res: res});
         if (doNotify && typeof notify.refs === "function") {
             notify.refs(done);
         }
@@ -531,20 +532,23 @@ var updateState = function(result) {
 };
 
 var getRefsAndUpdateState = function() {
+    if (cache.sleep) {
+        return;
+    }
     getRefs(function(changes) {
         var statusbar = $("#uglify-statusbar");
-        if (cache.requestRef === "" || cache.sleep || statusbar.hasClass("has-warning")) {
+        if (cache.requestRef === "") {
             return;
         }
-        if (changes.length === 0) {
+        if (!Array.isArray(changes.updated) || changes.updated.length === 0) {
             return;
         }
         if (!Array.isArray(cache.refsChanges)) {
             cache.refsChanges = [];
         }
-        cache.refsChanges.push(changes);
-        for (var i = 0; i < changes.length; i++) {
-            if (changes[i].ref === cache.requestRef) {
+        cache.refsChanges.push(changes.updated);
+        for (var i = 0; i < changes.updated.length; i++) {
+            if (changes.updated[i].ref === cache.requestRef && !statusbar.hasClass("has-warning")) {
                 $("#uglify-checkout-status")[0].innerHTML = $("#uglify-checkout-status")[0].innerHTML.replace("(", "(outdated ");
                 statusbar.removeClass("has-error has-success").addClass("has-warning");
             }
