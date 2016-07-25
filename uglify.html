@@ -153,7 +153,7 @@
 <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous" async></script>-->
 <script>
 var baseUrl = "https://raw.githubusercontent.com/mishoo/UglifyJS2/";
-var cache = {};
+var cache = {sleep: true};
 var notify = {};
 var UglifyJS;
 var editor;
@@ -303,6 +303,7 @@ var getRefs = function(done, warnings) {
     request("https://api.github.com/repos/mishoo/UglifyJS2/git/refs/", function(result, res) {
         var log = [];
         var doNotify = false;
+        cache.sleep = true;
         var addRef = function(ref, sha) {
             if (!cache.versions[ref]) {
                 log.push({ref: ref, type: "add", msg: "Added ref " + ref});
@@ -444,23 +445,40 @@ var updateUglify = function(done, check) {
 };
 
 var updateState = function(result) {
+    cache.requestRef = "";
     if (result === undefined) {
         $("#uglify-checkout-status")[0].innerHTML = "Invalid version";
         $("#uglify-compile").addClass("disabled");
-        $("#uglify-statusbar").removeClass("has-success").addClass("has-error");
+        $("#uglify-statusbar").removeClass("has-success has-warning").addClass("has-error");
     } else {
         var ref;
         if (shaRef.test(result.ref) && result.request !== result.ref) {
             ref = result.ref.substr(0, 10) + " (" + result.request + ")";
+            cache.requestRef = result.request;
         } else {
             ref = result.ref;
         }
         $("#uglify-checkout-status")[0].innerHTML = "Using " + ref;
         $("#uglify-compile").removeClass("disabled");
-        $("#uglify-statusbar").removeClass("has-error").addClass("has-success");
+        $("#uglify-statusbar").removeClass("has-error has-warning").addClass("has-success");
     }
     document.getElementById("uglify-url-copy").setAttribute("data-clipboard-text", location.toString());
 };
+
+var getRefsAndUpdateState = function() {
+    getRefs(function(changes) {
+        var statusbar = $("#uglify-statusbar");
+        if (ref === "" || cache.sleep || statusbar.hasClass("has-warning")) {
+            return;
+        }
+        for (var i = 0; i < changes.length; i++) {
+            if (changes[i].ref === cache.requestRef) {
+                $("#uglify-checkout-status")[0].innerHTML = $("#uglify-checkout-status")[0].innerHTML.replace("(", "(outdated ");
+                statusbar.removeClass("has-error has-success").addClass("has-warning");
+            }
+        }
+    });
+}
 
 document.onload = function(){
     if (cache.loaded) return;
@@ -523,6 +541,9 @@ document.onload = function(){
         opt_quote_style:  {type: "codegen", convertInt:!0, url: "quote_style",  uglify: "quote_style"},
     };
     getRefs();
+    cache.refCheck = setInterval(getRefsAndUpdateState, 15e4);
+    document.addEventListener("mousemove", function(){cache.sleep=false}, false);
+    document.addEventListener("keydown", function(){cache.sleep=false}, false)
     var state = parseUrl();
     var clipboardCopyUrl;
     var hideResetCancel = function() {
