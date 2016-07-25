@@ -455,7 +455,7 @@ var updateState = function(result) {
         if (shaRef.test(result.ref) && result.request !== result.ref) {
             ref = result.ref.substr(0, 10) + " (" + result.request + ")";
             var tmp;
-            if ((tmp = prRef.exec(result.request))) {
+            if ((tmp = prRef.exec(result.request)) !== null) {
                 cache.requestRef = "PR" + tmp[1];
             } else {
                 cache.requestRef = result.request;
@@ -632,6 +632,8 @@ document.onload = function(){
             var prResult;
             if ((prResult = prRef.exec(req.term)) !== null) {
                 req.term = "PR" + prResult[1];
+            } else if (/^(?:PR\s?(?:[-#]\s?)?|#)\s*$/.test(req.term)) {
+                req.term = "PR";
             }
             var f = new RegExp($.ui.autocomplete.escapeRegex(req.term));
             var items = Object.keys(cache.versions).filter(function(a) {
