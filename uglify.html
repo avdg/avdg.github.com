@@ -41,7 +41,7 @@
                             <li><a href="https://www.github.com/mishoo/UglifyJS2" target="_blank">Go to project page &#x1f517;</a></li>
                             <li><a id="uglify-show-intro">Show help shown at intro</a></li>
                             <li role="separator" class="divider"></li>
-                            <li><a id="uglify-update-refresh">Refresh cached versions</a></li>
+                            <li><a id="uglify-update-refresh">Refresh version cache</a></li>
                             <li><a id="uglify-update-info"><em id="uglify-update-state">No refs updated since page load</em></a></li>
                         </ul>
                     </span>
@@ -593,8 +593,11 @@ var showIntroHelp = function() {
         "You can jump around between many UglifyJS2 versions by typing the reference in\n" +
         "the adress bar above on the web page.\n\n" +
         "The editor will periodically (but not live) keep track of changes on the repo.\n" +
-        "Making sure you have access to the latest version as well. Updates can be forced\n" +
-        "by using the dropdown menu after the 'Change version' button."
+        "Making sure you have access to the latest version as well.\n\n" +
+        "Once an update has been detected for the current branch or pull request,\n" +
+        "it can be applied by pushing the 'Change version' button.\n\n" +
+        "For those who can't wait for updates: Updates can be forced by using the\n" +
+        "dropdown menu after the 'Change version' button.\n"
     );
     output.gotoLine(0, 0, false);
 };
