@@ -16,6 +16,12 @@
 #uglify-reset-settings-cancel {
     display: none;
 }
+.dropdown-with-updates .caret {
+    color: #D6C1DD;
+}
+.ace_editor {
+    border-radius: 10px;
+}
 </style>
 </head>
 <body>
@@ -26,8 +32,18 @@
                 <div class="input-group" id="uglify-statusbar">
                     <span class="input-group-addon" id="uglify-checkout-status">Loading...</span>
                     <input type="text" class="form-control" id="uglify-checkout-version" placeholder="(ref:) 572b97b master harmony v2.7.0 (pull request:) PR1234 #1234">
-                    <span class="input-group-btn">
+                    <span class="input-group-btn" id="uglify-version-change-group">
                         <button class="btn btn-default" type="submit" id="uglify-version-change">Change version</button>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="uglify-version-change-dropdown">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            <li><a href="https://www.github.com/mishoo/UglifyJS2" target="_blank">Go to project page &#x1f517;</a></li>
+                            <li><a id="uglify-show-intro">Show help shown at intro</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a id="uglify-update-refresh">Refresh cached versions</a></li>
+                            <li><a id="uglify-update-info"><em id="uglify-update-state">No refs updated since page load</em></a></li>
+                        </ul>
                     </span>
                 </div>
             </form>
@@ -150,7 +166,7 @@
 <script src="https://cdn.jsdelivr.net/clipboard.js/1.5.12/clipboard.min.js" integrity="sha384-zD0rXhmVlFWUQYNE6qhnghclEAj+YgdpXMO/izgNBWhg9CZTYfQx/LlgPCUfSH7V" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js" integrity="sha384-dim6dvS4/tcx+zsOxg6VjACswgfIjLcOqWsPasbGdpsQ0ODN48p6+6/0XEjq0rAi" crossorigin="anonymous" type="text/javascript" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/ace/1.2.3/min/ext-language_tools.js" integrity="sha384-Zz3lDIBdceaPA8mVxpDqqXSxv722PSbLMRco3RXsBhNUbuZnkX4xhUOtEZUEcPHo" crossorigin="anonymous" type="text/javascript" charset="utf-8"></script>
-<!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous" async></script>-->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous" async></script>
 <script>
 var baseUrl = "https://raw.githubusercontent.com/mishoo/UglifyJS2/";
 var cache = {sleep: true};
@@ -364,9 +380,13 @@ var getRefs = function(done, warnings) {
         cache.sleep = true;
         var addRef = function(ref, sha) {
             if (!cache.versions[ref]) {
-                log.push({ref: ref, type: "add", msg: "Added ref " + ref});
+                log.push({ref: ref, new: sha, old: null, type: "add",
+                    msg: "Added ref " + ref + "(" + sha.substr(0, 10) + ")"
+                });
             } else if (cache.versions[ref] !== sha) {
-                log.push({ref: ref, type: "changed", msg: "Updated ref " + ref});
+                log.push({ref: ref, new: sha, old: cache.versions[ref], type: "changed",
+                    msg: "Updated ref " + ref + " from " + cache.versions[ref].substr(0, 10) + " to " + sha.substr(0, 10)
+                });
             }
             cache.versions[ref] = sha;
         };
@@ -545,8 +565,16 @@ var getRefsAndUpdateState = function() {
         }
         if (!Array.isArray(cache.refsChanges)) {
             cache.refsChanges = [];
+            cache.refsUpdates = [];
         }
         cache.refsChanges.push(changes.updated);
+        cache.refsUpdates.push(new Date().toUTCString());
+
+        var dropdown = $("#uglify-version-change-dropdown");
+        if (!dropdown.hasClass("dropdown-with-updates")) {
+            dropdown.addClass("dropdown-with-updates");
+            $("#uglify-update-state").text("Some refs got updates");
+        }
         for (var i = 0; i < changes.updated.length; i++) {
             if (changes.updated[i].ref === cache.requestRef && !statusbar.hasClass("has-warning")) {
                 $("#uglify-checkout-status")[0].innerHTML = $("#uglify-checkout-status")[0].innerHTML.replace("(", "(outdated ");
@@ -555,6 +583,44 @@ var getRefsAndUpdateState = function() {
         }
     });
 }
+
+var showIntroHelp = function() {
+    output.getSession().setMode("ace/mode/text");
+    output.setValue(
+        "Minified code goes here after pressing the compile button\n\n" +
+        "Shortcuts can be found on https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts\n" +
+        "A nicer looking one can be found on https://duckduckgo.com/?q=ace+editor+cheat+sheet&iax=1\n\n" +
+        "You can jump around between many UglifyJS2 versions by typing the reference in\n" +
+        "the adress bar above on the web page.\n\n" +
+        "The editor will periodically (but not live) keep track of changes on the repo.\n" +
+        "Making sure you have access to the latest version as well. Updates can be forced\n" +
+        "by using the dropdown menu after the 'Change version' button."
+    );
+    output.gotoLine(0, 0, false);
+};
+var showUpdatesSummary = function() {
+    var c = 0;
+    var limit = 256;
+    var content = "Update log:\n\n";
+    if (Array.isArray(cache.refsChanges)) {
+        for (var i = cache.refsChanges.length - 1; i >= 0 && c < limit; i--) {
+            var d = new Date(cache.refsUpdates[i]);
+            content += "On " + d.toLocaleTimeString() + " at " + d.toDateString() + "\n\n";
+            for (var j = 0; j < cache.refsChanges[i].length; j++) {
+                content += " - " + cache.refsChanges[i][j].msg + "\n";
+                c++;
+            }
+            content += "\n\n";
+        }
+        content = content.substr(0, content.length - 2);
+    } else {
+        content += "No updates yet!";
+    }
+
+    output.getSession().setMode("ace/mode/text");
+    output.setValue(content);
+    output.gotoLine(0, 0, false);
+};
 
 document.onload = function(){
     if (cache.loaded) return;
@@ -713,6 +779,24 @@ document.onload = function(){
             event.initEvent("hashchange");
             window.dispatchEvent(event);
         }
+    });
+    $("#uglify-update-refresh").click(function() {
+        clearInterval(cache.refCheck);
+        getRefsAndUpdateState();
+        cache.refCheck = setInterval(getRefsAndUpdateState, 15e4);
+    });
+    $("#uglify-update-info").click(function() {
+        showUpdatesSummary();
+    });
+    $("#uglify-version-change-group").on("hidden.bs.dropdown", function() {
+        var state = $("#uglify-update-state");
+        if (state.text() === "Some refs got updates") {
+            state.text("No ref changes since last check");
+            $("#uglify-version-change-dropdown").removeClass("dropdown-with-updates");
+        }
+    });
+    $("#uglify-show-intro").click(function() {
+        showIntroHelp();
     });
     $("#load-from-external-url").click(function() {
         state = parseUrl();
@@ -966,14 +1050,10 @@ document.onload = function(){
     }
 
     output.setTheme("ace/theme/chrome");
-    output.getSession().setMode("ace/mode/markdown");
     output.setReadOnly(true);
-    output.setOption("wrap", true)
-    output.setValue("Minified code goes here after pressing the compile button\n\n" +
-                    "Shortcuts can be found on https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts\n" +
-                    "A nicer looking one can be found on https://duckduckgo.com/?q=ace+editor+cheat+sheet&iax=1");
+    output.setOption("wrap", true);
+    showIntroHelp();
     output.setReadOnly = function(){};
-    output.gotoLine(0,0,false);
 
     editor.focus();
 };
