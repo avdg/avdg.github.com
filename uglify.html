@@ -381,7 +381,7 @@ var getRefs = function(done, warnings) {
         var addRef = function(ref, sha) {
             if (!cache.versions[ref]) {
                 log.push({ref: ref, new: sha, old: null, type: "add",
-                    msg: "Added ref " + ref + "(" + sha.substr(0, 10) + ")"
+                    msg: "Added ref " + ref + " (" + sha.substr(0, 10) + ")"
                 });
             } else if (cache.versions[ref] !== sha) {
                 log.push({ref: ref, new: sha, old: cache.versions[ref], type: "changed",
