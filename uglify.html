@@ -204,6 +204,9 @@ var sortRefsByQuery = function(query) {
         for (var i = 0; a[i] === query[i] && i < query.length; i++) {
             points[a] += 10;
         }
+        if (cache.versions_info[a] !== undefined && cache.versions_info[a].open === false) {
+            points[a] = Math.max(0, points[a] - 1);
+        }
         return points[a];
     }
     return function(a, b) {
@@ -374,6 +377,7 @@ var request = function(url, done, options) {
 
 var getRefs = function(done, warnings) {
     done = done || function() {};
+    getPullRequestInfo();
     request("https://api.github.com/repos/mishoo/UglifyJS2/git/refs/", function(result, res) {
         var log = [];
         var doNotify = false;
@@ -414,6 +418,26 @@ var getRefs = function(done, warnings) {
         done({success: true, updated: log, error: false, res: res});
         if (doNotify && typeof notify.refs === "function") {
             notify.refs(done);
+        }
+    });
+}
+
+var getPullRequestInfo = function(done) {
+    done = done || function() {};
+    request("https://api.github.com/repos/mishoo/UglifyJS2/pulls?state=all&per_page=100", function(result, res) {
+        if (res.status !== 200 && res.status !== 304) {
+            return done({success: false, updated: false, error: res.status, res: res});
+        } else if (res.status === 304 && typeof cache.pr === object) {
+            return done({success: true, updated: false, error: false, res: res});
+        } else if (typeof cache.versions_info !== "object") {
+            cache.versions_info = {};
+        }
+        var data = JSON.parse(result);
+        for (var i in data) {
+            var key = "PR-" + data[i].number;
+            cache.versions_info[key] = cache.versions_info[key] || {};
+            cache.versions_info[key].title = data[i].title;
+            cache.versions_info[key].open = data[i].state === "open";
         }
     });
 }
@@ -751,6 +775,7 @@ document.onload = function(){
     }
     var searchBox = $("#uglify-checkout-version");
     searchBox[0].value = state.ref || "master";
+    cache.versions_info = cache.versions_info || {};
     searchBox.autocomplete({
         delay: 50,
         source: function(req, res) {
@@ -767,6 +792,13 @@ document.onload = function(){
                 return f.test(a);
             });
             items = items.sort(sortRefsByQuery(req.term)).slice(0, 10);
+            for (var i = 0; i < items.length; i++) {
+                var info = cache.versions_info[items[i]];
+                items[i] = {
+                    label: info ? items[i] + (info.open ? ": " : " [CLOSED]: ") + info.title : items[i],
+                    value: items[i]
+                };
+            }
             res(items);
         }
     });
