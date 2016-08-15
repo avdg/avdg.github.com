@@ -211,7 +211,7 @@ var sortRefsByQuery = function(query) {
         for (var i = 0; a[i] === query[i] && i < query.length; i++) {
             points[a] += 10;
         }
-        if (cache.versions_info[a] !== undefined && cache.versions_info[a].open === false) {
+        if (cache.versions_info[a] === undefined || cache.versions_info[a].open !== true) {
             points[a] = Math.max(0, points[a] - 1);
         }
         return points[a];
