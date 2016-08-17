@@ -416,7 +416,8 @@ var getRefs = function(done, warnings) {
             } else if (data[i].ref.substr(0, 11) === "refs/heads/") {
                 addRef(data[i].ref.substr(11), data[i].object.sha);
             } else if (data[i].ref.substr(0, 10) === "refs/tags/") {
-                addRef(data[i].ref.substr(10), data[i].object.sha);
+                var ref = data[i].ref.substr(10);
+                addRef(ref, ref);
             } else if (warnings && !/$refs\/(?:__gh__|pull)\//) {
                 console.debug(i + " is not used as reference");
             }
