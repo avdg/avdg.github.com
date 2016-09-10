@@ -20,6 +20,9 @@
 #uglify-reset-settings-cancel {
     display: none;
 }
+#uglify-checkout-status a {
+    color: inherit;
+}
 .dropdown-with-updates .caret {
     color: #D6C1DD;
 }
@@ -567,7 +570,7 @@ var updateState = function(result) {
     } else {
         var ref;
         if (shaRef.test(result.ref) && result.request !== result.ref) {
-            ref = result.ref.substr(0, 10) + " (" + result.request + ")";
+            ref = '<a href="https://github.com/mishoo/UglifyJS2/tree/' + result.ref + '" target="_blank">' + result.ref.substr(0, 10) + "</a> (" + result.request + ")";
             var tmp;
             if ((tmp = prRef.exec(result.request)) !== null && tmp[1] !== "") {
                 cache.requestRef = "PR-" + tmp[1];
