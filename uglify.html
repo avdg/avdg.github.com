@@ -179,14 +179,30 @@
 <script src="https://cdn.jsdelivr.net/ace/1.2.4/min/ext-language_tools.js" integrity="sha384-B/sYGHzCh9OFRAPwPv+v6Muz2QPvZUpS54ZAJxGv+EklkYbtUsmlRnxxSkk8Igsh" crossorigin="anonymous" type="text/javascript" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous" async></script>
 <script>
-var baseUrl = "https://raw.githubusercontent.com/mishoo/UglifyJS2/";
+var uedit = {
+    baseUrl: "https://raw.githubusercontent.com/mishoo/UglifyJS2/",
+    refsUrl: "https://api.github.com/repos/mishoo/UglifyJS2/git/refs/",
+    prInfoUrl: "https://api.github.com/repos/mishoo/UglifyJS2/pulls?state=all&per_page=100",
+    shaRef: /^[A-F0-9a-f]{3,40}\^*$/,
+    prRef: /^(?:PR\s?(?:[-#]\s?)?|#)([0-9]*)$/i,
+    messages_en: {},
+    notify: {}
+};
+uedit.messages = uedit.messages_en;
+uedit.messages_en.welcome =
+    "Minified code goes here after pressing the compile button\n\n" +
+    "Shortcuts can be found on https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts\n" +
+    "A nicer looking one can be found on https://duckduckgo.com/?q=ace+editor+cheat+sheet&iax=1\n\n" +
+    "You can jump around between many UglifyJS2 versions by typing the reference in\n" +
+    "the adress bar above on the web page.\n\n" +
+    "The editor will periodically (but not live) keep track of changes on the repo.\n" +
+    "Making sure you have access to the latest version as well.\n\n" +
+    "Once an update has been detected for the current branch or pull request,\n" +
+    "it can be applied by pushing the 'Change version' button.\n\n" +
+    "For those who can't wait for updates: Updates can be forced by using the\n" +
+    "dropdown menu after the 'Change version' button.\n"
 var cache = {sleep: true};
-var notify = {};
 var UglifyJS;
-var editor;
-var output;
-var shaRef = /^[A-F0-9a-f]{3,40}\^*$/;
-var prRef = /^(?:PR\s?(?:[-#]\s?)?|#)([0-9]*)$/i;
 var sort_biggest_num = function(first, second) {
     if (first.length !== second.length) {
         return first.length > second.length ? -1 : 1;
@@ -247,7 +263,6 @@ var sortRefsByQuery = function(query) {
         return 0;
     };
 };
-
 var parseUrl = function() {
     if (!location.hash) return {};
 
@@ -385,10 +400,9 @@ var request = function(url, done, options) {
     oReq.open("GET", url);
     oReq.send();
 }
-
 var getRefs = function(done, warnings) {
     done = done || function() {};
-    request("https://api.github.com/repos/mishoo/UglifyJS2/git/refs/", function(result, res) {
+    request(uedit.refsUrl, function(result, res) {
         var log = [];
         var doNotify = false;
         cache.sleep = true;
@@ -427,16 +441,15 @@ var getRefs = function(done, warnings) {
             }
         }
         done({success: true, updated: log, error: false, res: res});
-        if (doNotify && typeof notify.refs === "function") {
-            notify.refs(done);
+        if (doNotify && typeof uedit.notify.refs === "function") {
+            uedit.notify.refs(done);
         }
     });
     getPullRequestInfo();
 }
-
 var getPullRequestInfo = function(done) {
     done = done || function() {};
-    request("https://api.github.com/repos/mishoo/UglifyJS2/pulls?state=all&per_page=100", function(result, res) {
+    request(uedit.prInfoUrl, function(result, res) {
         if (res.status !== 200 && res.status !== 304) {
             return done({success: false, updated: false, error: res.status, res: res});
         } else if (res.status === 304 && typeof cache.pr === object) {
@@ -453,17 +466,16 @@ var getPullRequestInfo = function(done) {
         }
     });
 }
-
 var getRef = function(ref, done) {
     var result;
     ref = (ref + "").trim();
-    if ((result = prRef.exec(ref)) !== null && result[1] !== "") {
+    if ((result = uedit.prRef.exec(ref)) !== null && result[1] !== "") {
         ref = "PR-" + result[1];
-    } else if (shaRef.test(ref)) {
+    } else if (uedit.shaRef.test(ref)) {
         done(ref);
     }
     if (typeof cache.versions !== "object") {
-        notify.refs = function() {
+        uedit.notify.refs = function() {
             getRef(ref, done);
         }
         return;
@@ -475,7 +487,6 @@ var getRef = function(ref, done) {
         done(ref);
     }
 }
-
 var getUglify = function(ref, done) {
     getRef(ref, function(checkedRef) {
         if (checkedRef === undefined) {
@@ -484,7 +495,7 @@ var getUglify = function(ref, done) {
         }
         var urlRef = escape(checkedRef);
 
-        request(baseUrl + urlRef + "/tools/node.js", function(res) {
+        request(uedit.baseUrl + urlRef + "/tools/node.js", function(res) {
             if (typeof res !== "string" || res === "" || res.status >= 400) {
                 done();
                 return;
@@ -503,9 +514,9 @@ var getUglify = function(ref, done) {
 
             for (var i = 0; i < files.length; i++) {
                 if (files[i].substr(0, 3) === "../") {
-                    files[i] = baseUrl + urlRef + "/" + files[i].substr(3);
+                    files[i] = uedit.baseUrl + urlRef + "/" + files[i].substr(3);
                 } else if (files[i].substr(0, 2) === "./") {
-                    files[i] = baseUrl + urlRef + "/tools/" + files[i].substr(2);
+                    files[i] = uedit.baseUrl + urlRef + "/tools/" + files[i].substr(2);
                 } else {
                     throw Error("Invalid file");
                 }
@@ -537,7 +548,6 @@ var getUglify = function(ref, done) {
         });
     });
 }
-
 var updateUglify = function(done, check) {
     var ref = parseUrl().ref;
     done = typeof done === "function" ? done : function() {};
@@ -560,7 +570,31 @@ var updateUglify = function(done, check) {
         done(result);
     });
 };
-
+uedit.collection = function(type) {
+    var buffers = {};
+    type = type || Object;
+    return {
+        get: function(name) {
+            return buffers["$" + name];
+        },
+        set: function(name, buffer) {
+            if (buffer instanceof type) {
+                buffers["$" + name] = buffer;
+            }
+        },
+        create: function(name, text, mode) {
+            return (buffers["$" + name] = new type(text, mode));
+        },
+        delete: function(name) {
+            buffers["$" + name] = undefined;
+        },
+        has: function(name) {
+            return buffers["$" + name] !== undefined;
+        }
+    }
+}
+uedit.aceSessions = uedit.collection(ace.EditSession);
+uedit.aceViews = uedit.collection();
 var updateState = function(result) {
     cache.requestRef = "";
     if (result === undefined) {
@@ -569,10 +603,10 @@ var updateState = function(result) {
         $("#uglify-statusbar").removeClass("has-success has-warning").addClass("has-error");
     } else {
         var ref;
-        if (shaRef.test(result.ref) && result.request !== result.ref) {
+        if (uedit.shaRef.test(result.ref) && result.request !== result.ref) {
             ref = '<a href="https://github.com/mishoo/UglifyJS2/tree/' + result.ref + '" target="_blank">' + result.ref.substr(0, 10) + "</a> (" + result.request + ")";
             var tmp;
-            if ((tmp = prRef.exec(result.request)) !== null && tmp[1] !== "") {
+            if ((tmp = uedit.prRef.exec(result.request)) !== null && tmp[1] !== "") {
                 cache.requestRef = "PR-" + tmp[1];
             } else {
                 cache.requestRef = result.request;
@@ -621,20 +655,9 @@ var getRefsAndUpdateState = function() {
 }
 
 var showIntroHelp = function() {
+    var output = uedit.aceViews.get("output");
     output.getSession().setMode("ace/mode/text");
-    output.setValue(
-        "Minified code goes here after pressing the compile button\n\n" +
-        "Shortcuts can be found on https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts\n" +
-        "A nicer looking one can be found on https://duckduckgo.com/?q=ace+editor+cheat+sheet&iax=1\n\n" +
-        "You can jump around between many UglifyJS2 versions by typing the reference in\n" +
-        "the adress bar above on the web page.\n\n" +
-        "The editor will periodically (but not live) keep track of changes on the repo.\n" +
-        "Making sure you have access to the latest version as well.\n\n" +
-        "Once an update has been detected for the current branch or pull request,\n" +
-        "it can be applied by pushing the 'Change version' button.\n\n" +
-        "For those who can't wait for updates: Updates can be forced by using the\n" +
-        "dropdown menu after the 'Change version' button.\n"
-    );
+    output.setValue(uedit.messages.welcome);
     output.gotoLine(0, 0, false);
 };
 var showUpdatesSummary = function() {
@@ -656,6 +679,7 @@ var showUpdatesSummary = function() {
         content += "No updates yet!";
     }
 
+    var output = uedit.aceViews.get("output");
     output.getSession().setMode("ace/mode/text");
     output.setValue(content);
     output.gotoLine(0, 0, false);
@@ -665,9 +689,9 @@ document.onload = function(){
     if (cache.loaded) return;
     cache.loaded = true;
     var optionsBinary = {
-        opt_html5:   {type: "parser", url: "html",    uglify: "html5_comments"},
-        opt_shebang: {type: "parser", url: "shebang", uglify: "shebang"},
-        opt_bare:    {type: "parser", url: "bare" ,   uglify: "bare_returns"},
+        opt_html5:    {type: "parser", url: "html",    uglify: "html5_comments"},
+        opt_shebang:  {type: "parser", url: "shebang", uglify: "shebang"},
+        opt_bare:     {type: "parser", url: "bare" ,   uglify: "bare_returns"},
         opt_compress: {type: "options", url: "compr",  uglify: "compress"},
         opt_mangler:  {type: "options", url: "mangle", uglify: "mangle"},
         opt_seq:           {type: "compress", url: "seq",           uglify: "sequences"},
@@ -760,7 +784,7 @@ document.onload = function(){
 
     var storeInHash = function() {
         state = parseUrl();
-        state.editor = editor.getValue();
+        state.editor = uedit.aceViews.get("editor").getValue();
         if (state.editor === "") {
             state.editor = undefined;
         }
@@ -796,7 +820,7 @@ document.onload = function(){
                 return;
             }
             var prResult;
-            if ((prResult = prRef.exec(req.term)) !== null) {
+            if ((prResult = uedit.prRef.exec(req.term)) !== null) {
                 req.term = "PR-" + prResult[1];
             }
             var f = new RegExp($.ui.autocomplete.escapeRegex(req.term));
@@ -846,6 +870,7 @@ document.onload = function(){
         showIntroHelp();
     });
     $("#load-from-external-url").click(function() {
+        var editor = uedit.aceViews.get("editor");
         state = parseUrl();
         state.editor = undefined;
         state.from = $("#external-url")[0].value;
@@ -900,6 +925,8 @@ document.onload = function(){
         }
     })();
     $("#uglify-compile").click(function() {
+        var editor = uedit.aceViews.get("editor");
+        var output = uedit.aceViews.get("output");
         try {
             var options = {
                 options: {},
@@ -1075,8 +1102,10 @@ document.onload = function(){
     }, false);
 
     ace.require("ace/ext/language_tools");
-    editor = ace.edit("editor");
-    output = ace.edit("output");
+    var editor = ace.edit("editor");
+    var output = ace.edit("output");
+    uedit.aceViews.set("editor", editor);
+    uedit.aceViews.set("output", output);
     editor.$blockScrolling = output.$blockScrolling = Infinity; // Disable warning
 
     editor.setOptions({
