@@ -1,0 +1,13 @@
+<html>
+<head>
+</head>
+<body>
+<p>Test passed if you can read success below this line:</p>
+<div style="display:none" name="showme">Success</div>
+<div style="display:none">Test failed! This should never been seen</div>
+</body>
+<script>
+"￾";
+document.body.children[1].style.display="inline";
+</script>
+</html>
