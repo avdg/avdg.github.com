@@ -1,0 +1,39 @@
+---
+---
+
+html, body {
+    height: 100%;
+}
+h1 {
+    color: #444;
+}
+#header {
+    color: #f8f8f8;
+    background-color: #48b;
+}
+#content {
+    min-height: 100%;
+}
+#footer {
+    color: #333;
+    background-color: #ccc;
+    padding: 10px;
+    border-radius: 5px 5px 0 0;
+
+    bottom: 0;
+}
+#footer a {
+    color: #555;
+}
+
+#footer a:visited {
+    color: #777;
+}
+.bubble {
+    font-size: 110%;
+    margin: 40px;
+    padding: 10px 0;
+    background-color:#fbf8f8;
+    border-radius:5px;
+    color:#555;
+}

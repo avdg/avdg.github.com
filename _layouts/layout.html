@@ -4,39 +4,36 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-<style>
-h1 {
-    color: #444;
-}
-#header {
-    color: #f8f8f8;
-    background-color: #48b;
-}
-#footer {
-    color: #333;
-    background-color: #ccc;
-    padding: 10px;
-    border-radius: 5px 5px 0 0;
-}
-#footer a {
-    color: #555;
-}
+<link rel="stylesheet" href="/css/style.css">
 
-#footer a:visited {
-    color: #777;
-}
-.bubble {
-    font-size: 110%;
-    margin: 40px;
-    padding: 10px 0;
-    background-color:#fbf8f8;
-    border-radius:5px;
-    color:#555;
-}
-</style>
 <title>About Anthony Van de Gejuchte</title>
 </head>
 <body>
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-header-collapse" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+
+        
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="navbar-header-collapse">
+            <ul class="nav navbar-nav">
+                <li><a href="/">Home</a></li>
+                <li><a href="/porfolio.html">Porfolio</a></li>
+                <li><a href="/contributions.html">Contributions</a></li>
+                <li><a href="/abilities.html">Abilities</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
 
 <div class="jumbotron" id="header">
     <div class="container">
@@ -47,11 +44,24 @@ h1 {
     </div>
 </div>
 
-<div class="container">
+<div class="container" id="content">
 {{content}}
+</div>
+
+<div class="container" id="footer">
+    <a href="https://www.twitter.com/anthonyvdg" target="_blank">Twitter</a> |
+    <a href="https://www.github.com/avdg" target="_blank">Github</a> |
+    <a href="https://keybase.io/anthonyvdg" target="_blank">Keybase</a> |
+    <a href="https://www.patreon.com/user?u=5253341" target="_blank">Patreon</a> |
+    <a href="https://www.codingame.com/profile/1c94d328153760af90a0752eb705fbee7539711" target="_blank">Codingame</a> |
+    <a href="https://codefights.com/profile/avdg" target="_blank">Codefights</a> |
+    <a href="https://legacy.joind.in/user/view/1682" target="_blank">Joindin</a> |
+    <a href="https://www.meetup.com/en-US/phpgent/members/103357312/" target="_blank">Meetup</a> |
+    <a href="https://www.linkedin.com/in/anthony-van-de-gejuchte-1084b413a/" target="_blank">LinkedIn</a>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha384-rY/jv8mMhqDabXSo+UCggqKtdmBfd3qC2/KvyTDNQ6PcUJXaxK1tMepoQda4g5vB" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous" async></script>
 {% include ga.html %}
+
 </body></html>
