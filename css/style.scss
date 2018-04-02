@@ -30,6 +30,26 @@ h1 {
 #footer a:visited {
     color: #777;
 }
+
+/* Used on 404 page */
+.large-empty-container {
+    min-height: 15em;
+}
+
+.big {
+    font-size: 6em;
+    font-family: monospace;
+}
+
+.note {
+    font-size: 1em;
+}
+
+/* Additional styling */
+.empty-jumbotron {
+    text-align: center;
+}
+
 .bubble {
     font-size: 110%;
     margin: 40px;
